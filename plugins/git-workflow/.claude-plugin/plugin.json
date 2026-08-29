@@ -1,0 +1,8 @@
+{
+  "name": "git-workflow",
+  "version": "0.1.0",
+  "description": "Branch, worktree and pull-request hygiene",
+  "author": {
+    "name": "Damien Dagnet"
+  }
+}
