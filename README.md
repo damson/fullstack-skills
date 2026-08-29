@@ -5,7 +5,7 @@ you actually work in.
 
 ```bash
 claude plugin marketplace add damson/agent-skills
-claude plugin install git-workflow@agent-skills --yes
+claude plugin install git-workflow@skill-themes --yes
 ```
 
 Both commands are idempotent and exit `0` on a re-run. `--yes` is required when

@@ -1,6 +1,6 @@
 {
   "$schema": "https://www.schemastore.org/claude-code-marketplace.json",
-  "name": "agent-skills",
+  "name": "skill-themes",
   "description": "Theme-grouped skills for coding agents \u2014 install only the themes you work in.",
   "owner": {
     "name": "Damien Dagnet"
