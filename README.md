@@ -1,11 +1,11 @@
-# agent-skills
+# fullstack-skills
 
 A Claude Code marketplace of skills, grouped by theme so you install only what
 you actually work in.
 
 ```bash
-claude plugin marketplace add damson/agent-skills
-claude plugin install git-workflow@skill-themes --yes
+claude plugin marketplace add damson/fullstack-skills
+claude plugin install git-workflow@fullstack-skills --yes
 ```
 
 Both commands are idempotent and exit `0` on a re-run. `--yes` is required when
