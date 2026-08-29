@@ -1,0 +1,8 @@
+{
+  "name": "agent-config",
+  "version": "0.1.0",
+  "description": "Authoring and auditing agent instruction files. Find contradictions and duplication across a CLAUDE.md stack, keep a config file a pointer instead of a copy, spot rules worth turning into a skill, and capture a long session's learnings before compacting it.",
+  "author": {
+    "name": "Damien Dagnet"
+  }
+}

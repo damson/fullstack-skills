@@ -1,0 +1,55 @@
+{
+  "$schema": "https://www.schemastore.org/claude-code-marketplace.json",
+  "name": "agent-skills",
+  "description": "Theme-grouped skills for coding agents \u2014 install only the themes you work in.",
+  "owner": {
+    "name": "Damien Dagnet"
+  },
+  "plugins": [
+    {
+      "name": "git-workflow",
+      "description": "Branch, worktree and pull-request hygiene: rebasing open PRs onto a merged base, replying to review findings, pruning dead branches, embedding screenshots that actually render, and checking a diagram still matches the system.",
+      "author": {
+        "name": "Damien Dagnet"
+      },
+      "category": "workflow",
+      "source": "./plugins/git-workflow"
+    },
+    {
+      "name": "agent-config",
+      "description": "Authoring and auditing agent instruction files. Find contradictions and duplication across a CLAUDE.md stack, keep a config file a pointer instead of a copy, spot rules worth turning into a skill, and capture a long session's learnings before compacting it.",
+      "author": {
+        "name": "Damien Dagnet"
+      },
+      "category": "productivity",
+      "source": "./plugins/agent-config"
+    },
+    {
+      "name": "verification",
+      "description": "Evidence discipline: prove a test, assertion or CI gate can actually fail before trusting it, and observe a dependency's real behaviour instead of asserting what its docs imply.",
+      "author": {
+        "name": "Damien Dagnet"
+      },
+      "category": "testing",
+      "source": "./plugins/verification"
+    },
+    {
+      "name": "data-safety",
+      "description": "Guardrails for writes that are hard to undo. Probe a migration inside a transaction and roll it back, make a bulk write reversible before running it, and catch the Supabase-managed-schema traps that pass review and fail in production.",
+      "author": {
+        "name": "Damien Dagnet"
+      },
+      "category": "database",
+      "source": "./plugins/data-safety"
+    },
+    {
+      "name": "mobile-ui",
+      "description": "Android and Compose UI work: recording and verifying screenshot baselines without the silent no-op that reports PASSED while comparing nothing, and building a Compose component from a Figma node bound to design tokens.",
+      "author": {
+        "name": "Damien Dagnet"
+      },
+      "category": "development",
+      "source": "./plugins/mobile-ui"
+    }
+  ]
+}
