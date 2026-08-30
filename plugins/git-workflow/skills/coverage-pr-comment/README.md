@@ -40,7 +40,27 @@ THRESHOLDS = {          # branch coverage runs below line coverage in every
 The comment on a pull request, after two pushes — still one comment, edited in
 place:
 
-<!-- preview-image -->
+> ## Coverage: 47.3% of lines (▲ +6.1 vs main)
+>
+> 🟦🟦🟦🟦🟦🟦🟦🟦🟩⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜
+>
+> **1841/3890 lines**
+>
+> 🟡 **Approaching target** — 12.7 points below the 60% line target
+>
+> | Metric | Base | Head | Δ | Status |
+> |---|---:|---:|---:|:--:|
+> | Line | 41.2% | 47.3% | ▲ +6.1 | 🟡 |
+> | Branch | 25.1% | 24.4% | ▼ -0.7 | 🔴 |
+>
+> <sub>🟦 covered on main &nbsp; 🟩 added here &nbsp; 🟥 removed here &nbsp; ⬜ uncovered</sub>
+> <sub>🔴 below floor · 🟡 below target · 🟢 at target — line 40/60, branch 25/45</sub>
+
+That is the live markdown, not a screenshot — GitHub renders it here exactly as
+it renders in the comment, so this preview cannot drift from the format the skill
+produces. The same body was posted to a real pull request while writing this, and
+posted a second time, to confirm the upsert edits one comment instead of adding a
+second.
 
 Source, for copying:
 
