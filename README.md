@@ -19,7 +19,7 @@ stdout is not a TTY.
 | **agent-config** | 8 | Writing and auditing agent instruction files |
 | **verification** | 2 | Proving a check can fail before trusting it |
 | **data-safety** | 3 | Writes that are hard to undo |
-| **mobile-ui** | 3 | Android / Compose screenshots and Figma components |
+| **mobile-ui** | 4 | Android / Compose screenshots, Figma components, on-device checks |
 
 ### git-workflow
 
@@ -63,10 +63,12 @@ Catch the Supabase-managed-schema traps that pass review and fail in production.
 
 Record and verify Compose screenshot baselines, including the silent no-op where
 the task reports `PASSED` while comparing no pixels at all. Build a Compose
-component from a Figma node, bound to design tokens rather than raw values.
+component from a Figma node, bound to design tokens rather than raw values. And
+where no test can hold the claim, drive the change on a real device without
+trusting a stale frame or a tap that missed.
 
 `android-screenshot-baseline-record` · `android-screenshot-baseline-verify` ·
-`figma-to-compose-component`
+`figma-to-compose-component` · `android-verify-on-device`
 
 ## What a skill here looks like
 
