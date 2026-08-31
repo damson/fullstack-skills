@@ -116,7 +116,16 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          if git push origin HEAD:develop; then
+          git fetch origin develop --quiet
+
+          # develop is normally AHEAD of main between releases, and this job also
+          # runs on the daily schedule — not only after a release merge. Pushing
+          # main onto a develop that already contains it is not a fast-forward, so
+          # without this guard the first scheduled run opens a back-merge PR with
+          # no commits in it and `gh pr create` fails the job.
+          if git merge-base --is-ancestor HEAD origin/develop; then
+            echo "develop already contains main — nothing to back-merge."
+          elif git push origin HEAD:develop; then
             echo "develop fast-forwarded to main."
           else
             echo "::warning::develop could not be fast-forwarded; opening a back-merge PR."
