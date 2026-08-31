@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+
+# A newer push makes an in-flight run for the same ref pointless. Without this,
+# a hung run also blocks the queue for its successor.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # The job id is the status context branch protection requires on main. Renaming
+  # it silently un-gates the release, so the protection rule and this name have to
+  # move together.
+  validate:
+    runs-on: ubuntu-latest
+    # The whole job is seconds of work. Ten minutes is a hang, not slowness — fail
+    # so the pull request shows red instead of sitting in_progress for hours.
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      # Structural checks on the skills themselves: frontmatter name matches the
+      # folder, a Procedure section, a When to STOP section, no duplicate leaf
+      # names. Vendored from agent-config-harness — see the header of the script
+      # for why it is a copy and how to migrate back to the harness.
+      - name: Skill structure
+        run: ./scripts/validate-skills.sh
+
+      # The wiring around the skills: manifests, sources, versions, and whether
+      # the README still tells the truth about what is here.
+      - name: Marketplace wiring
+        run: python3 scripts/validate-marketplace.py
