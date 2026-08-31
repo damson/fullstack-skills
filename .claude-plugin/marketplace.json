@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "git-workflow",
-      "description": "Branch, worktree and pull-request hygiene: rebasing open PRs onto a merged base, replying to review findings, pruning dead branches, embedding screenshots that actually render, and checking a diagram still matches the system.",
+      "description": "Branch, worktree and pull-request hygiene: rebasing open PRs onto a merged base, replying to review findings, pruning dead branches, embedding screenshots that actually render, posting coverage as one sticky comment with a threshold band, and checking a diagram still matches the system.",
       "author": {
         "name": "Damien Dagnet"
       },
