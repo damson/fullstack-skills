@@ -31,9 +31,16 @@ frame changed since the action.
 
    ```bash
    adb shell am force-stop <pkg>
+   adb logcat -c                       # BEFORE the launch, or see below
    adb shell monkey -p <pkg> 1 >/dev/null 2>&1
    until adb logcat -d | grep -q "Displayed <pkg>/.*MainActivity"; do sleep 1; done
    ```
+
+   **Clear the buffer first, or the wait is not a wait.** `logcat -d` dumps the
+   whole ring buffer, so the `Displayed` line from a launch ten minutes ago matches
+   on the first pass and the loop returns before this launch has drawn anything —
+   green, instant, and wrong. If the buffer cannot be cleared, match on a line
+   newer than a timestamp you took first (`adb logcat -d -t "$ts"`).
 
    `am start` cannot reach an activity declared `android:exported="false"` — reach
    those through the app's own UI, not through adb.
