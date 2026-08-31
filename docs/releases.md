@@ -29,7 +29,11 @@ you cannot release nothing.
 - Opens the `develop → main` pull request with the inventory: which versions
   moved, which PRs are in the batch, the diffstat, the commits.
 - Runs the CI suite and enables auto-merge.
-- Once merged, tags `vYYYY.MM.DD` and publishes a GitHub Release.
+- Once merged, tags `vYYYY.MM.DD` and publishes a GitHub Release. `main` is
+  only tagged once it is a release point — while `develop` is ahead and no
+  release has ever happened, `main` is a baseline and is left alone. Tagging
+  it would publish a release containing none of the merged work, and the
+  fresh tag would then hold the real first release behind the three-day gate.
 - Fast-forwards `develop` back to `main`, so the branches do not drift.
 
 Marketplace tags are CalVer and plugin versions are semver on purpose. The tag
