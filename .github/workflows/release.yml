@@ -61,6 +61,19 @@ jobs:
             echo "skip=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
+          # main is only a release point once develop has been promoted into it.
+          # On a repo that has never released, main is a baseline: tagging it
+          # would publish a release containing none of the merged work, and that
+          # fresh tag would then hold the real first release behind the three-day
+          # gate in the propose job below.
+          git fetch origin develop --quiet
+          if [ -z "$last" ] && ! git merge-base --is-ancestor origin/develop HEAD; then
+            echo "No release yet and develop is ahead of main — main is a baseline,"
+            echo "not a release point. Leaving it untagged."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           if [ -z "$last" ]; then
             echo "No tag yet; this is the first release."
           else
