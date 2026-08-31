@@ -4,7 +4,8 @@ description: >
   Use when a PR has just merged on `origin/develop` or `origin/main`, when multiple open
   PRs share an ancestor that has now landed, when the user says "rebase the open PRs" /
   "manage open PRs" / "PR X merged, clean up" / "fix conflicts" / "deal with conflicting
-  PRs", or after running `gh pr merge`. Goal — drop duplicate commits introduced by the
+  PRs", **before merging a PR that another open PR is based on**, or after
+  running `gh pr merge`. Goal — drop duplicate commits introduced by the
   merge, force-push the open PRs onto the new base, prune dead worktrees and branches,
   and close the issues the merged PR's keywords could not.
 ---
@@ -12,6 +13,35 @@ description: >
 # Post-merge branch hygiene
 
 After any merge to `develop` / `main`, the other open PRs that branched from the merged work appear `CONFLICTING` on GitHub because the merge commit assigned new SHAs to commits whose patches are now in the base. Resolution is mechanical: rebase + force-push.
+
+## Before you merge a PR others are based on
+
+Merging is where a stack is lost, and both failure modes look like the tool
+helping.
+
+1. **Find the children, and retarget them FIRST**:
+
+   ```bash
+   gh pr list --base <branch-about-to-merge> --json number,headRefName
+   gh pr edit <n> --base <the parent's own base>      # BEFORE the merge
+   ```
+
+   Merging the parent does **not** retarget a child — it leaves it running its
+   checks against a branch nobody will push to again. Deleting the parent's
+   branch does not retarget it either: it **closes** it. And a closed PR can be
+   neither retargeted (`Cannot change the base branch of a closed pull request`)
+   nor reopened once its base branch is gone, so the only recovery is a new PR
+   from the same branch — the review history stays behind on the closed one.
+
+2. **Remove the worktree holding the branch**, or `--delete-branch` fails with
+   `cannot delete branch '<x>' used by worktree at …` and the merge lands with
+   the branch still there — which is the state that leaves a child stranded.
+
+   ```bash
+   git worktree remove <path> && gh pr merge <parent> --squash --delete-branch
+   ```
+
+3. **Then rebase each child** onto the new base, per the procedure below.
 
 ## Procedure
 
@@ -44,11 +74,27 @@ After any merge to `develop` / `main`, the other open PRs that branched from the
 
    Every command in the rest of step 3 runs against `$wt`.
 
-   b. Rebase onto the PR's new base:
+   b. Rebase onto the PR's new base — **which of the two forms depends on how
+   the parent landed**:
+
    ```bash
+   # Parent was MERGED (a merge commit): its commits are ancestors of the base,
+   # so a plain rebase recognises and skips the duplicates.
    git -C "$wt" rebase origin/<base-branch>
    ```
    Git auto-skips commits whose patches are already on the base (the duplicate ones). Watch the `warning: skipped previously applied commit <sha>` lines — those confirm the cleanup.
+
+   ```bash
+   # Parent was SQUASH-merged: its commits are NOT ancestors of anything, so the
+   # plain form replays this PR's work onto changes it already contains and
+   # conflicts on every hunk. Replay only this PR's own commits instead.
+   git -C "$wt" rebase --onto origin/<base-branch> <parent-branch-tip-sha> <branch>
+   ```
+   `<parent-branch-tip-sha>` is where this PR forked — the parent's last commit,
+   which `git log --oneline <branch>` still shows even after the parent branch is
+   deleted. Check which case you are in before running either:
+   `gh pr view <parent> --json mergedAt,mergeCommit` — a null `mergeCommit.oid`
+   with a non-null `mergedAt` means squash.
 
    c. **Inspect the result**:
    ```bash
