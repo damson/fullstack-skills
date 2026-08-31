@@ -44,7 +44,7 @@
     },
     {
       "name": "mobile-ui",
-      "description": "Android and Compose UI work: recording and verifying screenshot baselines without the silent no-op that reports PASSED while comparing nothing, and building a Compose component from a Figma node bound to design tokens.",
+      "description": "Android and Compose UI work: recording and verifying screenshot baselines without the silent no-op that reports PASSED while comparing nothing, building a Compose component from a Figma node bound to design tokens, and verifying a change on a running device without reading a stale frame.",
       "author": {
         "name": "Damien Dagnet"
       },
