@@ -79,6 +79,21 @@ Skills are written to be **portable**: none names a path from the repo it came
 from, or assumes a folder layout. Where one can take advantage of tooling you may
 not have, it says so and degrades instead of failing.
 
+## Releases
+
+`develop` integrates, `main` is what `claude plugin marketplace add` installs.
+A workflow promotes one to the other every three days, but only when there is
+something to promote and the CI suite passes — plugins that changed get a patch
+bump, the marketplace gets a CalVer tag. Gates, couplings and how to hold a
+release: [docs/releases.md](docs/releases.md).
+
+Run the same checks CI runs, without a token or a network call:
+
+```bash
+./scripts/validate-skills.sh        # structure of every skill
+python3 scripts/validate-marketplace.py   # manifests and README vs the tree
+```
+
 ## Related
 
 The engine these were extracted from — a domain registry, an LLM rubric that
