@@ -5,6 +5,19 @@ Two long-lived branches. `develop` integrates; `main` is what people install.
 released the moment it reaches `main` — nothing else is required, and nothing
 else can hold it back.
 
+## The first release has to be done by hand
+
+GitHub runs `schedule` and `workflow_dispatch` only from the copy of a workflow
+on the **default branch**. Until `release.yml` exists on `main`, it is not
+registered at all — `gh workflow list` does not show it and a dispatch answers
+`404: workflow not found on the default branch`. The release automation cannot
+put itself on `main`, because putting it there *is* a release.
+
+So the first promotion is manual: bump the changed plugins, open `develop → main`,
+merge it **with a merge commit**. Every release after that is automatic. The same
+applies if the workflow is ever renamed — the new filename is unregistered until
+it reaches `main`.
+
 ## The cadence
 
 `.github/workflows/release.yml` runs daily and asks three questions. All three
