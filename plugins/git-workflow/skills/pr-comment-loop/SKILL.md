@@ -22,7 +22,7 @@ For each open PR you have touched in this session — OR all open PRs in the cur
 
 2. **Identify NEW comments** since your last reply on that PR: run the sticky-comment selector (defined once, in step 6 where it is also used to post) and compare each comment's `createdAt` against the sticky's **last-edit time**, `jq -r '.[0].updated_at' <<<"$mine"` — the selector's `select()` keeps whole REST comment objects, and creation time never advances once the sticky is edited in place. No sticky yet → every comment is new.
 
-3. **Verify each finding against the source, then classify it.** Before acting on a finding, open the cited `file:line` in the actual source. Cold-read reviewers see the diff without surrounding context and are confidently wrong often enough that applying findings unchecked introduces bugs — the classic misses: a "missing" guard that exists just outside the hunk, a demanded convention the repo doesn't have, a finding re-raised rounds after it was applied. A finding that does not survive that check gets a 🚫 Skipped row (verdict vocabulary in step 6) citing the contradicting line — never silence.
+3. **Verify each finding against the source, then classify it.** Before acting on a finding, open the cited `file:line` in the actual source. Cold-read reviewers see the diff without surrounding context and are confidently wrong often enough that applying findings unchecked introduces bugs — the classic misses: a "missing" guard that exists just outside the hunk, a demanded convention the repo doesn't have, a finding re-raised rounds after it was applied. A finding that does not survive that check is 🚫 Skipped, never silenced — the step 6 table owns the rationale rules.
 
    Then parse the comment body (`.comments[].body` and `.reviews[].body` from the JSON above) for emoji headings `🔴 Critical`, `🟡 Should fix`, `🟢 Nice to have`; a finding that is pure praise or explicitly requires no action classifies as 💬 Acknowledgement. If the reviewer doesn't use that emoji convention, split the comment into its distinct findings yourself and classify each by the same rules — praise is still 💬, everything actionable defaults to 🟡 — marking each classification as assumed in the reply table so the user can re-grade.
 
@@ -60,13 +60,14 @@ For each open PR you have touched in this session — OR all open PRs in the cur
    ```bash
    marker='<!-- claude-review-response -->'
    me=$(gh api user -q .login)
+   # REST, not `gh pr view` — its objects carry the numeric id and updated_at
    # MY comments whose body STARTS WITH the marker — never `contains`, never the reviewer's
-   mine=$(gh pr view <n> --json comments \
-     --jq "[.comments[] | select(.author.login == \"$me\" and (.body | startswith(\"$marker\")))]")
+   mine=$(gh api "repos/<owner>/<repo>/issues/<n>/comments" --paginate \
+     --jq "[.[] | select(.user.login == \"$me\" and (.body | startswith(\"$marker\")))]")
    case "$(jq length <<<"$mine")" in
-     0) : "post a fresh comment" ;;
-     1) : "PATCH that one comment (edit in place)" ;;
-     *) : "STOP — more than one match, do not patch" ;;
+     0) gh pr comment <n> --body-file reply.md ;;
+     1) gh api -X PATCH "repos/<owner>/<repo>/issues/comments/$(jq -r '.[0].id' <<<"$mine")" -F body=@reply.md ;;
+     *) echo "more than one sticky match — refusing to patch" >&2; exit 1 ;;
    esac
    ```
 
@@ -103,16 +104,10 @@ For each open PR you have touched in this session — OR all open PRs in the cur
 
    ### Recovering a clobbered comment
 
-   If you do overwrite the wrong comment, GitHub retains every prior body — recover it before anything else. REST does not expose this; GraphQL does:
-
-   ```bash
-   gh api graphql -f query='
-   { repository(owner:"OWNER", name:"REPO") { pullRequest(number:NN) {
-       comments(first:20) { nodes { databaseId
-         userContentEdits(first:20) { nodes { editedAt editor { login } diff } } } } } } }'
-   ```
-
-   `userContentEdits` returns prior bodies newest-first. Take the last one written by the original author, write it to a file, and restore with `gh api -X PATCH repos/OWNER/REPO/issues/comments/<id> -F body=@restore.md`. Then post your own reply as a **separate** comment.
+   If the wrong comment is overwritten anyway, GitHub retains every prior
+   body: query `userContentEdits` on the comment via the GraphQL API (REST
+   does not expose it), restore the last body written by the original author
+   with a REST PATCH, and post your own reply as a **separate** comment.
 
 7. **Report back to the user** with a single line per PR:
    ```

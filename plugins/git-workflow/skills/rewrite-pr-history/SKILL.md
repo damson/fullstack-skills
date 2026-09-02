@@ -12,10 +12,6 @@ description: >
 
 # Rewrite PR history
 
-When the user says "fix conflicts on PR N", "remove the X commit from PR N",
-"rebase PR N onto main", "reorder commits on PR N", "drop the last commit",
-or similar, run the procedure below.
-
 The goal: never lose the user's work, never force-push to a shared branch,
 never skip pre-flight checks. Every step is recoverable if interrupted.
 
@@ -59,7 +55,7 @@ Use the smallest-blast-radius command for the job:
 
 | Goal | Command |
 |---|---|
-| Resolve conflicts with new main | `git rebase origin/main` |
+| Rebase onto a moved base (the user asked for a rebase, not a forward merge) | `git rebase origin/<base>` |
 | Drop one commit in the middle | `git rebase --onto <base> <commit-to-drop> <branch>` |
 | Reorder / squash | `GIT_SEQUENCE_EDITOR=<script> git rebase -i origin/<base>` — see below; interactive `-i` without the wrapper needs terminal input agents don't have |
 | Reword last commit only | `git commit --amend` (verify HEAD is the right commit first) |
@@ -89,26 +85,34 @@ Run the project's documented test command. Detect it in this order:
 4. Fall back to known project conventions: `bats tests/` for shell repos,
    `pytest` for Python, `cargo test` for Rust.
 
-Also run the linter the repo CI uses (check `.github/workflows/` for hints —
-`shellcheck`, `eslint`, `ruff`, etc.).
+Also run the linter the repo CI uses:
+`grep -hE 'run:.*(lint|shellcheck|eslint|ruff|clippy|flake8)' .github/workflows/*.yml`
+— run only commands whose name says lint, and only when the tool exists
+locally (`command -v`); a matched line that needs CI-only setup is noted as
+not run, never guessed at.
 
 Don't push if checks fail — fix locally first.
 
 ### 6. SSH-agent pre-flight
 
+Only for SSH remotes — when `git remote get-url origin` starts with `https://`,
+auth is `gh`'s problem and this step is skipped.
+
 ```bash
 ssh-add -l
 ```
 
-If the agent has no identities, add the key the host uses (check `~/.ssh/config`
-first; fall back to `~/.ssh/id_rsa` or `~/.ssh/id_ed25519`):
+If the agent has no identities, add the key `~/.ssh/config` names for the host;
+with no config entry, prefer `~/.ssh/id_ed25519` and fall back to
+`~/.ssh/id_rsa`:
 
 ```bash
 ssh-add ~/.ssh/<keyfile>
 ssh -T git@github.com   # or git@gitlab.com
 ```
 
-Confirm the auth message names the expected user before pushing.
+Confirm the auth message names the account `gh api user -q .login` reports
+before pushing.
 
 ### 7. Force-push with lease
 
@@ -136,13 +140,12 @@ Report state back to the user.
 
 ## When to STOP
 
-- **Branch is `main` or shared** → refuse. Suggest a revert PR or a forward-fix.
-- **`--force-with-lease` is rejected** by remote → stop. Surface the diff,
-  ask the user how to proceed. Do not switch to plain `--force`.
+- **Branch is protected** (`main`, `develop`, anything the host lists as
+  protected) → refuse outright; suggest a revert PR or a forward-fix. A branch
+  that is merely *suspected* shared (step 1's checks) → ask, don't refuse.
 - **No explicit per-branch authorization for force-push** → ask. Prior
   authorization on one branch does not extend to another.
-- **PR has approved reviews or unresolved comments** → ask before rewriting;
-  reviewers may need to re-approve, and review comments anchor to commits.
-- **CI was green and the rewrite is purely cosmetic** → ask if rewrite is worth
-  the cache invalidation; sometimes a follow-up commit is better.
-- **Working tree is dirty** → ask the user. Never silently stash.
+- **CI was green and the rewrite is cosmetic** — `git rev-parse HEAD^{tree}`
+  equals the pre-rewrite head's tree, only messages or commit shape change →
+  ask first: every rewritten commit re-runs CI from scratch, and sometimes a
+  follow-up commit is better.

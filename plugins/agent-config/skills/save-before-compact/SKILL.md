@@ -7,10 +7,8 @@ description: >
   learnings then compact". NEVER fire unsolicited. This skill APPLIES changes
   (CLAUDE.md / preference-file additions, memory, new skills) and writes a resume
   brief, then stops for the user to run /compact — it never runs /compact itself.
-  A session with < ~15 substantive turns is too thin to have learnings — the
-  procedure then skips straight to the resume brief. Defer entirely when a
-  high-stakes op is in flight (deploy, mid-merge, incident) or on someone
-  else's transcript.
+  Thin sessions get only the resume brief; in-flight high-stakes ops defer
+  (Step 1 has the thresholds).
 ---
 
 # Save before compact
@@ -30,7 +28,8 @@ conditions.
   Record what's available — later steps branch on it.
 - Defer (one line, then stop) if a high-stakes op is in flight — scan the last
   ~5 turns for a deploy / merge / rebase / migration / incident command whose
-  completion was never confirmed — or if this is another operator's transcript.
+  completion was never confirmed (confirmed = its success output is in the
+  transcript, or the user said it landed) — or if this is another operator's transcript.
 
 ### Step 2 — Reflect & route
 
@@ -46,7 +45,7 @@ missed one costs nothing. For each keeper, pick a target — **versioned first**
 | Target | For |
 |---|---|
 | `CLAUDE.md` / `AGENTS.md` (team-shared) | Repo-wide facts future sessions need |
-| personal preference files (whatever the config repo calls them) | Personal cross-project preferences |
+| personal preference files — the ones `readlink ~/.claude/*.md` resolves into the config repo (none resolving → no such layer exists; route to memory) | Personal cross-project preferences |
 | memory store (`~/.claude/…/memory/`) — **last** | Durable facts fitting no versioned file (un-versioned, lowest priority) |
 
 Respect repo conventions: don't fatten a file the repo keeps as a one-line pointer
@@ -62,7 +61,9 @@ better as long as it stays relevant and performant.
 ### Step 4 — Assess (per-item approve)
 
 Show each addition as a diff: **target · why (one line) · the line**. The user
-**applies or skips each**. Write nothing without approval. Keep an
+**applies or skips each**. Write nothing without approval; when no user reply arrives (a headless or
+scheduled run — anything where asking cannot block), every addition is
+recorded in the resume brief as proposed, not applied. Keep an
 applied/skipped ledger.
 
 ### Step 5 — Verify & score
@@ -73,12 +74,16 @@ After applying:
 - **Score** the changed files with the repo's eval command if one exists,
   reading the **newest** result artifact it writes and checking its mtime —
   a stale artifact from a previous run reads exactly like a fresh score;
-  otherwise an inline rubric — score clarity, conciseness, completeness,
-  consistency and actionability 1–5 each against "a capable session could act on
-  this without guessing", and map the /25 total to grades as the harness does:
-  A ≥ 23, B ≥ 20, C ≥ 17, D ≥ 14, else F.
-- A score regression or a violated rule (pointer, em-dash, secret) → surface it
-  and offer to tighten or revert. Never silently ship a regression.
+  otherwise an inline rubric, 1–5 per dimension — clarity (unambiguous on
+  first read), conciseness (nothing restated), completeness (no undefined
+  branch), consistency (no two rules disagree), actionability (every step maps
+  to a command or edit). Anchors: 5 = no violation found; 4 = one minor; 3 =
+  a violation a future session would trip on; 2–1 = actively misleading. Map
+  the /25 total as the harness does: A ≥ 23, B ≥ 20, C ≥ 17, D ≥ 14, else F.
+- A score regression or a violated repo rule — a file kept as a one-line
+  pointer fattened, a character the repo's lint bans, anything a secret
+  scanner would catch → surface it and offer to tighten or revert; never
+  silently ship a regression.
 
 ### Step 6 — Memory (lowest priority)
 
@@ -131,11 +136,8 @@ Stop. The user presses `/compact`.
 
 ## When to STOP
 
-- **No per-item approval** → do not apply an addition or create a skill; a
-  declined skill is recorded in the resume brief, not created.
-- **Score regression, or the edit breaks a rule the repo enforces** (fattening
-  a file kept as a one-line pointer, a character its lint bans, anything a
-  secret scanner would catch) → surface and offer to tighten or revert; do not
-  ship silently.
-- Steps 1 and 5 carry their own short-circuits (thin session, high-stakes op,
-  no harness); when one fires, say so in one line rather than continuing.
+The gates live inside the steps — approval in Step 4, regression and
+repo-rule checks in Step 5, thin-session and high-stakes short-circuits in
+Step 1; when one fires, act as written there and say so in one line. Two
+stops end the skill itself: Step 1's high-stakes defer, and Step 9's handoff
+waiting for the user to run `/compact`.
