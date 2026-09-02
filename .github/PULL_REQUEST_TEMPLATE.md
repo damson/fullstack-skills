@@ -1,4 +1,4 @@
-## 👥 In plain words
+## 👥 High-level summary
 
 <!--
     3–5 sentences someone outside this codebase could follow. No identifiers,
@@ -87,6 +87,24 @@
     sentence you spend thirty seconds writing.
 -->
 
+<!--
+    ═══ CONDITIONAL — KEEP ONLY IF THIS PR ADDS OR CHANGES A SKILL ═══
+    Delete this whole block for CI, docs or script changes. CI already
+    enforces structure (frontmatter name, Procedure, When to STOP present);
+    this list is what CI cannot check.
+
+## 🧩 Skill checklist
+
+    - [ ] Portable — names no path, repository or project it came from, and
+          degrades instead of failing where optional tooling is absent
+    - [ ] The description says when to fire AND when not to — a skill that
+          triggers on everything is noise in every session that installs it
+    - [ ] `## When to STOP` covers the cases where acting would be wrong, not
+          just where it would fail
+    - [ ] Every embedded command was actually run against something real, not
+          composed for the document
+-->
+
 ## ✅ Test plan
 
 <!--
@@ -94,7 +112,8 @@
     actually observed.
 
     - [ ] Automated checks pass — `./scripts/validate-skills.sh` and
-          `python3 scripts/validate-marketplace.py` (both run in CI)
+          `python3 scripts/validate-marketplace.py` (the same two commands CI
+          runs; no token, network or special tooling needed)
     - [ ] New or updated tests cover the change (state the before → after count)
     - [ ] CI is green (name the jobs)
     - [ ] Verified end-to-end against real data or a running instance, not
@@ -122,12 +141,17 @@
     actually reviews, then leave them alone.
 -->
 
-- [ ] Automated/AI review has run and its comments have been read
-- [ ] **Findings addressed or explicitly skip-justified after every push** — a
-      new push invalidates the previous review; re-read it
+- [ ] Review findings addressed or explicitly skip-justified after every
+      push — a new push invalidates the previous review; re-read it
 - [ ] Marketplace bookkeeping in sync — a skill added, removed or materially
       changed updates the README theme table and bumps its plugin's version in
       the same PR
+
+<!--
+    Maintainers additionally run an automated review and a skill-quality eval
+    on their side — you do not need either to contribute. Expect findings to
+    arrive as ordinary review comments.
+-->
 
 <!--
     RESPONDING TO REVIEW
