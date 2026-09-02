@@ -88,6 +88,10 @@ Skills are written to be **portable**: none names a path from the repo it came
 from, or assumes a folder layout. Where one can take advantage of tooling you may
 not have, it says so and degrades instead of failing.
 
+Beside every `SKILL.md` sits a `README.md` — the human-facing half: what the
+skill produces, the phrases that reach it, a worked example, and the sibling
+skills it hands off to. The `SKILL.md` stays the procedure the agent follows.
+
 ## Releases
 
 `develop` integrates, `main` is what `claude plugin marketplace add` installs.
