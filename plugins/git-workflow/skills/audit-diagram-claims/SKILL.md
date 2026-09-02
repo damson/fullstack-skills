@@ -88,17 +88,31 @@ Ask what each box *asserts*, and what the map does not mention at all.
    ' <diagram-file>
    ```
 
-   Then break it on purpose and confirm exit 1 — corrupt an **arrow**
-   (`-->` → `--`), not a label. See the first sharp edge for why.
+   Then break it on purpose and confirm exit 1: `flowchart TB` → `flowchart ZZ`.
+   Not every mutation works — see the first sharp edge before picking another.
 
 6. **Report the claims you verified**, not "diagram updated". "Checked cadence,
    count and the two guarantees; added the missing discovery node" is auditable.
 
 ## Sharp edges
 
-- **A valid-looking mutation is not a test.** Inside a quoted mermaid label,
-  `[[[` is legal text and parses fine — injecting it shows green and proves
-  nothing. Break the edge syntax itself.
+- **A valid-looking mutation is not a test, and "break the arrow" is one.**
+  Inside a quoted label, `[[[` is legal text and parses fine. So does `A -- B`:
+  mermaid accepts a bare `--` as an open link, so corrupting `-->` to `--`
+  leaves a valid diagram and a green check. This page recommended exactly that
+  until 2026-09-02, which made the one step whose job is proving the check can
+  fail the step least able to do it.
+
+  Mutations measured against mermaid's own `parse()`:
+
+  | mutation | result |
+  |---|---|
+  | `-->` → `--` | exits 0 — **inert** |
+  | `-->` → `-->>` | exits 1 ✓ |
+  | `flowchart TB` → `flowchart ZZ` | exits 1 ✓ |
+
+  Prefer the diagram-type mutation: it is one token, obviously wrong, and
+  impossible to mistake for valid syntax in a language you are not fluent in.
 - **Guarantees rot first.** They are added by the PRs least likely to think
   about pictures — the ones hardening a failure path. Check them before cadences.
 

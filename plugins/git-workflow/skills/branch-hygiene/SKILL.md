@@ -92,9 +92,20 @@ helping.
    ```
    `<parent-branch-tip-sha>` is where this PR forked — the parent's last commit,
    which `git log --oneline <branch>` still shows even after the parent branch is
-   deleted. Check which case you are in before running either:
-   `gh pr view <parent> --json mergedAt,mergeCommit` — a null `mergeCommit.oid`
-   with a non-null `mergedAt` means squash.
+   deleted. Get it by counting your own commits back from the tip:
+
+   ```bash
+   n=$(gh pr view <child> --json commits -q '.commits | length')
+   parent_tip=$(git -C "$wt" rev-parse "<branch>~$n")
+   ```
+
+   Then pick the form by asking **git**, not the API — see the first sharp edge
+   for why the API cannot answer this:
+
+   ```bash
+   git -C "$wt" merge-base --is-ancestor "$parent_tip" origin/<base-branch> \
+     && echo "plain rebase" || echo "rebase --onto"
+   ```
 
    c. **Inspect the result**:
    ```bash
@@ -133,10 +144,16 @@ helping.
    listed branch only when it has no open PR and no surviving worktree:
    ```bash
    def=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD | cut -d/ -f2-)
-   git branch --merged origin/<base-branch> | sed 's/^[*+ ] //' |
-     grep -vxE "<base-branch>|$def"      # never the base or the default branch
-   gh pr list --state open --json headRefName -q '.[].headRefName'   # keep these
-   git branch -d <branch>                 # refuses if unmerged — trust it
+   # Enumerate from PR STATE, not `git branch --merged` — first sharp edge.
+   list=$(mktemp)
+   for b in $(git for-each-ref --format='%(refname:short)' refs/heads |
+              grep -vxE "<base-branch>|$def"); do
+     st=$(gh pr list --state all --head "$b" \
+            --json state -q '.[0].state' 2>/dev/null)
+     [ "$st" = "MERGED" ] && echo "$b" >> "$list"   # MERGED only, never CLOSED
+   done
+   grep -qxE "<base-branch>|$def" "$list" && { echo "ABORT"; exit 1; }
+   xargs -a "$list" -n1 git branch -D     # -d refuses a squash-merged branch
    git push origin --delete <branch>      # skip if the merge already deleted it
    ```
 
@@ -178,6 +195,25 @@ helping.
    PR #4: rebased onto develop, dropped 2 duplicate commits, CLEAN
    PR #5: was already CLEAN, no action
    ```
+
+## Sharp edges
+
+- **`git branch --merged` cannot see a squash-merge.** A squash commit is not
+  the commits it squashed, so a squash-merged branch is never an ancestor of the
+  base: `--merged` omits it and `git branch -d` refuses it as unmerged. In a
+  repo that squashes every feature PR — the common setup — that means the
+  cleanup step silently does nothing, forever. Measured 2026-09-02 on one repo:
+  **47 stale branches, every one with a MERGED PR, and `--merged` listed almost
+  none of them.**
+
+  The branch's own history cannot answer "was this merged". The PR can:
+
+  ```bash
+  gh pr list --state all --head "$b" --json state -q '.[0].state'
+  ```
+
+  Then `-D`, not `-d` — and only on `MERGED`, never on `CLOSED`, which means
+  the work was abandoned rather than landed.
 
 ## When to STOP and ask
 
