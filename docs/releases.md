@@ -55,7 +55,15 @@ you cannot release nothing.
 Marketplace tags are CalVer and plugin versions are semver on purpose. The tag
 answers *when*; a plugin's version answers *what changed in it*.
 
-## Two couplings that will not announce themselves
+## Three couplings that will not announce themselves
+
+**The propose job needs a repository setting that is off by default.** It opens
+the release PR with `GITHUB_TOKEN`, which requires *Settings → Actions →
+General → "Allow GitHub Actions to create and approve pull requests"*. Off,
+the failure — `GitHub Actions is not permitted to create or approve pull
+requests` — arrives only at the first real release, after the version bumps
+have already been pushed. It cost this repo its first automated run
+(2026-09-02); a fork or a re-created repo starts with it off again.
 
 **The required check is matched by name.** Branch protection on `main` requires
 a context called `validate`, which is the job id in `ci.yml`. Rename the job and
