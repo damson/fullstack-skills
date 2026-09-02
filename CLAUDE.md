@@ -11,6 +11,9 @@ directives below are agent-only.
 - A skill added, removed or materially changed updates the README theme table
   and skill list, and minor-bumps its plugin's version, **in the same PR**. The
   release workflow adds the patch bump; never pre-apply it.
+- A `SKILL.md` edit checks the sibling `README.md` for claims it falsifies —
+  the README narrates the procedure, and a changed step reads as documented
+  behaviour until someone notices.
 - In a plugin's README section, any backticked lowercase word is read as a
   skill name by `validate-marketplace.py` — keep prose there backtick-free.
 
