@@ -17,9 +17,8 @@ reviewer sees a broken-image icon while the link looks correct to you (your
 browser is already authenticated).
 
 The rule: **use `github.com/<owner>/<repo>/raw/<sha>/<path>`, pinned to a commit
-SHA.** GitHub serves that host with browser cookies, so anyone with repo access
-renders it; it leaves both image hosts un-proxied, so the browser fetches
-directly.
+SHA.** GitHub authenticates that host with the reader's browser cookies, so
+anyone with repo access renders it.
 
 ## Procedure
 
@@ -31,8 +30,6 @@ branch and push. You need its path and the **commit SHA** that contains it:
 ```bash
 git rev-parse HEAD   # the SHA to pin
 ```
-
-Do not rely on the branch name in the URL (see step 3).
 
 ### 2. Build the embed URL
 
@@ -58,11 +55,17 @@ Use the commit SHA in the path, not the branch name. A squash-merge deletes the
 branch, which 404s every branch-pinned URL — but the PR's head commit stays
 reachable via `refs/pull/<n>/head` indefinitely, so a SHA-pinned embed survives.
 
-### 4. Verify as a different reader
+### 4. Verify
 
-Open the PR in an incognito window (or ask a reviewer). A broken image here is
-the wrong-host signal — re-check that the URL is `github.com/.../raw/...` and not
-`raw.githubusercontent.com`.
+Two checks are runnable without a second account:
+
+```bash
+git cat-file -e <sha>:<path-to-image>        # the blob exists at the pinned SHA
+gh pr view <n> --json body -q .body | grep -c raw.githubusercontent.com   # must be 0
+```
+
+If a reviewer still reports a broken image after both pass, ask them for the
+failing URL — a host or SHA typo survives every local check.
 
 ## When to STOP and ask
 

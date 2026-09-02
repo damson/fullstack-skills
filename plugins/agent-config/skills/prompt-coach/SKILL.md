@@ -19,14 +19,14 @@ Sibling skills:
 
 ## The 4Ds framework
 
-| Letter | What it measures | High score looks like | Low score looks like |
-|---|---|---|---|
-| **D**elegation | Trust in the assistant to choose how, not just what. | "Open the PR with whatever body you think best." | Specifying every option and decision; treating the assistant as a typewriter. |
-| **D**escription | Clarity of subject + scope + expected output. | "Rebase PRs #3, #4 on develop, force-push, report one line each." | "Manage the open PRs." |
-| **D**iscernment | Quality of feedback on the assistant's output — pushing back, validating, catching mistakes. | "PR description has a broken Mermaid line — fix it AND make sure future PRs lint for it." | Silent acceptance of low-quality output. |
-| **D**iligence | Follow-through across turns — reminders, verification, applying new conventions retroactively. | "Apply this rule retroactively to open PRs and document it as a convention." | Letting promises drop; not surfacing missed commitments. |
+| Letter | What it measures |
+|---|---|
+| **D**elegation | Trust in the assistant to choose how, not just what. |
+| **D**escription | Clarity of subject + scope + expected output. |
+| **D**iscernment | Quality of feedback on the assistant's output — pushing back, validating, catching mistakes. |
+| **D**iligence | Follow-through across turns — reminders, verification, applying new conventions retroactively. |
 
-Each scored **1–5**.
+Each scored **1–5** against the anchors table below.
 
 ## Procedure
 
@@ -35,9 +35,9 @@ Each scored **1–5**.
 When the user pastes / quotes one prompt and asks "rate this":
 
 1. Read the prompt + the ~3 turns of session context around it.
-2. Score each D from 1 to 5. Justify each with the specific cue in the prompt (or its absence).
+2. Score each D from 1 to 5. Justify each with the specific cue in the prompt (or its absence). Diligence is cross-turn by definition: in Mode A score it only when the prompt itself follows up on an earlier commitment; otherwise N/A.
 3. Identify the **weakest D** and explain it in one sentence.
-4. Propose **one rewrite** of the prompt that fixes that weakest dimension without inflating word count by more than ~30%.
+4. Propose **one rewrite** of the prompt that fixes that weakest dimension without inflating word count by more than ~30% — the one length bound for every rewrite this skill produces.
 5. Stop. Don't lecture.
 
 Output template:
@@ -64,9 +64,9 @@ Output template:
 
 When the user asks for an end-of-session or multi-prompt review:
 
-1. Sample up to **8 representative prompts** spread across the session (not the first/last 3 — those are noisy).
+1. Sample up to **8 prompts**, evenly spaced by turn index across the session with the first and last 3 turns excluded (noisy setup/wrap-up). If the exclusion leaves fewer than 8, take all that remain; fewer than 3 → say the session is too thin for Mode B and offer Mode A on a prompt of the user's choice.
 2. Score each prompt on 4D (or skip a D if not applicable to that prompt).
-3. Compute the **average per D** and a **session total** (X / 20).
+3. Compute the **average per D**, and a **session total** over the dimensions that actually scored (X / 4×`<scored Ds>` — a session where a D was always N/A totals out of 15, not 20). Trend per D: compare its average over the first half of sampled prompts to the second half — ↑ / ↓ when they differ by ≥ 0.5, stable otherwise.
 4. Identify the **single weakest pattern** (which D is consistently low across prompts).
 5. Pick **one concrete past prompt** as the case study — show the original and a rewrite.
 6. If the pattern suggests automation, propose **one new skill** (defer to `skill-opportunity-finder` for the full proposal — just name it + one-line rationale here).
@@ -85,7 +85,7 @@ Sampled <n> prompts.
 | Discernment | X.X | ↑ stable ↓ | <pattern> |
 | Diligence | X.X | ↑ stable ↓ | <pattern> |
 
-**Session total**: X.X / 20
+**Session total**: X.X / <max over scored dimensions>
 
 **Weakest pattern**: <D> — <2-sentence diagnosis>
 
@@ -108,7 +108,8 @@ Rewrite:
 | Diligence† | Drops follow-ups; misses skipped steps. | Returns to unfinished items eventually. | Tracks open commitments, applies new conventions retroactively, verifies before closing. |
 
 *Discernment is only scored when the prompt REPLIES to assistant output.
-†Diligence is scored across turns, not within one prompt.
+†Diligence needs cross-turn evidence: in Mode A that exists only when the
+prompt itself follows up on an earlier commitment; otherwise N/A.
 
 If a D can't logically apply (e.g. first-turn prompt can't show Discernment) → write **N/A** and exclude from the average.
 
@@ -121,7 +122,5 @@ If a D can't logically apply (e.g. first-turn prompt can't show Discernment) →
 ## What to NEVER do
 
 - Don't moralize. The 4Ds are diagnostic, not judgmental.
-- Don't suggest a rewrite that doubles the word count — the goal is denser, not longer.
-- Don't grade Discernment or Diligence on prompts where those dimensions can't logically apply.
 - Don't bring up old prompts the user didn't ask about, in Mode A. Mode B is the only place for cross-prompt patterns.
 

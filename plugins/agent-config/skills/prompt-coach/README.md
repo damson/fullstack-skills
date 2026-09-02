@@ -18,7 +18,7 @@ you have to ask for it.
 - an end-of-session review of your work-with-Claude habits
 
 Two modes: **Mode A** scores a single prompt you paste or point at. **Mode B**
-samples up to 8 representative prompts across the session, averages per
+samples up to 8 prompts evenly spaced across the session, averages per
 dimension, and picks one case study.
 
 It declines to score someone else's prompts, defers mid-incident, and pushes

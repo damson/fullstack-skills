@@ -1,11 +1,11 @@
 ---
 name: claude-md-pointer-check
 description: >
-  Use before creating or substantially editing any CLAUDE.md file. Detects
-  when a sibling AGENTS.md or README.md already covers the planned content,
-  and rewrites the CLAUDE.md as a pointer + Claude-only delta instead of a
-  duplicate. Prevents the "byte-for-byte duplicate" anti-pattern that costs
-  conciseness and lets the copies drift apart.
+  Use before creating a CLAUDE.md, or before an edit that adds or rewrites a
+  whole section of one — not for typo- or line-level fixes. Detects when a
+  sibling AGENTS.md or README.md already covers the planned content, rewrites
+  the CLAUDE.md as a pointer + Claude-only delta instead of a duplicate, and
+  flags unactionable phrasing found in the sibling on the way through.
 ---
 
 # CLAUDE.md pointer check
@@ -29,11 +29,21 @@ In the same directory:
 If neither exists, this skill does not apply — write CLAUDE.md normally and
 exit.
 
+**Resolve symlinks before comparing.** In many repos the sibling `AGENTS.md`
+is a symlink *to* the CLAUDE.md you are editing (`readlink AGENTS.md`). If it
+resolves to the same file, CLAUDE.md is already the canonical copy — comparing
+it against itself would mark every section a duplicate and rewrite the
+canonical file into a pointer at its own symlink. Skip to step 4.
+
 ### 2. Compare planned content to siblings
 
-For each section of the planned CLAUDE.md:
+For each section of the planned CLAUDE.md, apply the deletion test: **would
+dropping this section lose any fact or command a sibling does not already
+state?** Same *topic* is not overlap; same *information* is. A section that
+adds even one repo-specific rule to a topic the README covers is a keeper —
+trimmed to the delta, not dropped.
 
-| Planned section overlaps with | Action |
+| Planned section fails the deletion test against | Action |
 |---|---|
 | AGENTS.md (any sibling) | Drop the section — it belongs in AGENTS.md or is already there |
 | README.md (commands, architecture, mental model) | Drop the section — defer to README |
@@ -79,8 +89,8 @@ git flow. The directives below are Claude-only and don't belong in README.
 
 ### 4. Lint sibling for subjective phrasing
 
-While here, scan the sibling AGENTS.md / README for phrases that read as rules
-but cannot be acted on:
+While here, scan the sibling AGENTS.md / README for phrases that read as
+instructions but give an agent nothing to act on:
 - "leave it better than you found it"
 - "stay scoped"
 - "focus on core business logic"

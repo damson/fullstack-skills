@@ -7,17 +7,11 @@ description: >
   learnings then compact". NEVER fire unsolicited. This skill APPLIES changes
   (CLAUDE.md / preference-file additions, memory, new skills) and writes a resume
   brief, then stops for the user to run /compact — it never runs /compact itself.
-  Skip when the session has < ~15 substantive turns (too thin to have learnings),
-  when a high-stakes op is in flight (deploy, mid-merge, incident), or on someone
-  else's transcript.
+  Thin sessions get only the resume brief; in-flight high-stakes ops defer
+  (Step 1 has the thresholds).
 ---
 
 # Save before compact
-
-A self-driving pre-compaction gate: capture what the session taught (each addition
-approved and scored), suggest and optionally create skills, snapshot how to
-resume, then stop for the user to run `/compact` — the one action the skill cannot
-take itself.
 
 ## Procedure
 
@@ -28,14 +22,15 @@ conditions.
 
 - Count substantive turns (ignore < 10-word acknowledgements: `thanks`, `ok`,
   `yes`, `nice`). If `< 15`, say so and skip straight to the resume brief (Step 8)
-  — a thin session has nothing worth persisting.
+  — nothing worth persisting, but the pick-up note still gets written.
 - Detect context: is there a `CLAUDE.md` / `AGENTS.md` nearby? a skill-structure
   test suite or a config eval command, if the repo ships either (check its
   README / justfile / package scripts — do not assume names)? Record what's
   available — later steps branch on it.
 - Defer (one line, then stop) if a high-stakes op is in flight — scan the last
   ~5 turns for a deploy / merge / rebase / migration / incident command whose
-  completion was never confirmed — or if this is another operator's transcript.
+  completion was never confirmed (confirmed = its success output is in the
+  transcript, or the user said it landed) — or if this is another operator's transcript.
 
 ### Step 2 — Reflect & route
 
@@ -51,7 +46,7 @@ missed one costs nothing. For each keeper, pick a target — **versioned first**
 | Target | For |
 |---|---|
 | `CLAUDE.md` / `AGENTS.md` (team-shared) | Repo-wide facts future sessions need |
-| personal preference files (whatever the config repo calls them) | Personal cross-project preferences |
+| personal preference files — the ones `readlink ~/.claude/*.md` resolves into the config repo (none resolving → no such layer exists; route to memory) | Personal cross-project preferences |
 | memory store (`~/.claude/…/memory/`) — **last** | Durable facts fitting no versioned file (un-versioned, lowest priority) |
 
 Respect repo conventions: don't fatten a file the repo keeps as a one-line pointer
@@ -67,7 +62,9 @@ better as long as it stays relevant and performant.
 ### Step 4 — Assess (per-item approve)
 
 Show each addition as a diff: **target · why (one line) · the line**. The user
-**applies or skips each**. Write nothing without approval. Keep an
+**applies or skips each**. Write nothing without approval; when no user reply arrives (a headless or
+scheduled run — anything where asking cannot block), every addition is
+recorded in the resume brief as proposed, not applied. Keep an
 applied/skipped ledger.
 
 ### Step 5 — Verify & score
@@ -77,11 +74,18 @@ After applying:
   tests (found in Step 1); otherwise sanity-check the edited file still
   parses/renders.
 - **Score** the changed files with the repo's eval command if Step 1 found one,
-  reading the score from wherever that command writes it; otherwise an inline
-  rubric on the 5 dimensions (clarity, conciseness, completeness, consistency,
-  actionability).
-- A score regression or a violated rule (pointer, em-dash, secret) → surface it
-  and offer to tighten or revert. Never silently ship a regression.
+  reading the **newest** result artifact it writes and checking its mtime —
+  a stale artifact from a previous run reads exactly like a fresh score;
+  otherwise an inline rubric, 1–5 per dimension — clarity (unambiguous on
+  first read), conciseness (nothing restated), completeness (no undefined
+  branch), consistency (no two rules disagree), actionability (every step maps
+  to a command or edit). Anchors: 5 = no violation found; 4 = one minor; 3 =
+  a violation a future session would trip on; 2–1 = actively misleading. Map
+  the /25 total as the harness does: A ≥ 23, B ≥ 20, C ≥ 17, D ≥ 14, else F.
+- A score regression or a violated repo rule — a file kept as a one-line
+  pointer fattened, a character the repo's lint bans, anything a secret
+  scanner would catch → surface it and offer to tighten or revert; never
+  silently ship a regression.
 
 ### Step 6 — Memory (lowest priority)
 
@@ -92,7 +96,9 @@ Skip entirely if no memory store exists.
 ### Step 7 — Suggest & create skills
 
 Invoke `skill-opportunity-finder` (Skill tool) to surface repeated patterns worth
-a new skill. Present each candidate — name · one-line rationale · concrete past
+a new skill; where it is not installed, scan for its patterns inline — repeated
+corrections, repeated manual operations, repeated discovery work — and say the
+scan was inline. Present each candidate — name · one-line rationale · concrete past
 trigger. For each the user **approves, create it now, before compaction**, via the
 skill-verification loop: write the new `SKILL.md` → run the repo's skill structure
 tests → score it with the repo's eval command (inline rubric where no harness) →
@@ -103,8 +109,8 @@ into the resume brief for later. Skip the step if no repeated pattern surfaced.
 
 ### Step 8 — Resume brief
 
-Compose a tight *pick-up-here* note: **Goal · Done · Next actions · Open
-questions · Key files/commands/decisions**. Save it, then mirror it to a stable
+Compose a tight *pick-up-here* note — never a transcript: **Goal · Done ·
+Next actions · Open questions · Key files/commands/decisions**. Save it, then mirror it to a stable
 pointer:
 
 ```bash
@@ -112,7 +118,7 @@ repo=$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")
 branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null | tr '/' '-'); : "${branch:=nobranch}"
 ts=$(date +%Y%m%d-%H%M%S)
 sid=$(echo "${CLAUDE_SESSION_ID:-$PWD}" | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -1); : "${sid:=nosession}"
-dir=.claude; mkdir -p "$dir" 2>/dev/null || dir="$SCRATCHPAD"   # fallback if repo not writable
+dir=.claude; mkdir -p "$dir" && [ -w "$dir" ] || dir="${TMPDIR:-/tmp}"   # fall back if the repo dir is unwritable
 f="$dir/${repo}-${branch}-${ts}-${sid}.md"
 ```
 
@@ -132,14 +138,8 @@ Stop. The user presses `/compact`.
 
 ## When to STOP
 
-- **Nothing to save** — thin session (Step 1), or the user skipped every addition
-  → no writes; go straight to the resume brief + handoff.
-- **No per-item approval** → do not apply an addition or create a skill; a
-  declined skill is recorded in the resume brief, not created.
-- **No eval harness** → inline rubric, and say so; never claim a harness score
-  that wasn't produced.
-- **Score regression / violated rule** (pointer, em-dash, secret) → surface and
-  offer to tighten or revert; do not ship silently.
-- **High-stakes op in flight, or another operator's transcript** → defer with one
-  line and stop.
-- **Resume brief** stays a tight pick-up note, never a transcript.
+The gates live inside the steps — approval in Step 4, regression and
+repo-rule checks in Step 5, thin-session and high-stakes short-circuits in
+Step 1; when one fires, act as written there and say so in one line. Two
+stops end the skill itself: Step 1's high-stakes defer, and Step 9's handoff
+waiting for the user to run `/compact`.

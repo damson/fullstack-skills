@@ -15,7 +15,7 @@ how to reach it.
 Ask in any of these shapes:
 
 - "audit my agent config"
-- "these config files feel stale"
+- "which instruction files are actually active here?"
 - "check CLAUDE.md and AGENTS.md for contradictions"
 - after restructuring how your config is organised, or when onboarding to a
   new project

@@ -46,7 +46,7 @@ A push lands on PR #14 and an AI reviewer leaves four findings. The skill:
    | 🟡 #1 null check | ✅ Applied | `parser.ts:88` — guard added |
    | 🟡 #2 constraint violation | 🚫 Skipped | false positive — value is an array literal, no constraint applies |
    | 🟢 #3 rename suggestion | ⏳ Deferred | follow-up issue #31 |
-   | ✅ #4 test coverage praise | 💬 Acknowledged | — |
+   | 💬 #4 test coverage praise | 💬 Acknowledged | — |
 
 The four verdicts are the entire vocabulary — "Considered" and "Noted" are
 forbidden, because the point of the table is that every row is unambiguous.

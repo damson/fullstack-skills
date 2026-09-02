@@ -34,7 +34,7 @@ A before/after pair needs to go into a private repo's PR body. The skill:
    | ![before](https://github.com/OWNER/REPO/raw/<sha>/docs/screenshots/before.png) | ![after](https://github.com/OWNER/REPO/raw/<sha>/docs/screenshots/after.png) |
    ```
 
-3. Verifies as a different reader — incognito window or an actual reviewer. A
+3. Verifies with runnable checks — the blob exists at the pinned SHA, and no wrong-host URL survived in the PR body. A
    broken image there means the host is wrong, not the file.
 
 Two rules carry all the weight:
