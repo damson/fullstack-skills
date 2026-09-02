@@ -15,21 +15,24 @@ stdout is not a TTY.
 
 | Plugin | Skills | What it is for |
 |---|---|---|
-| **git-workflow** | 7 | Branch, worktree and pull-request hygiene |
+| **git-workflow** | 9 | Branch, worktree and pull-request hygiene |
 | **agent-config** | 8 | Writing and auditing agent instruction files |
 | **verification** | 2 | Proving a check can fail before trusting it |
-| **data-safety** | 3 | Writes that are hard to undo |
-| **mobile-ui** | 3 | Android / Compose screenshots and Figma components |
+| **data-safety** | 4 | Writes that are hard to undo |
+| **mobile-ui** | 4 | Android / Compose screenshots, Figma components, on-device checks |
 
 ### git-workflow
 
 Rebase open PRs onto a base that has just merged, reply to review findings one
 row per finding, prune dead branches and worktrees, embed a screenshot that
-renders for reviewers on a private repo, and check a diagram still matches the
-system before ticking "architecture updated".
+renders for reviewers on a private repo, report coverage as one sticky comment
+with a threshold band rather than a fresh number every push, check a diagram
+still matches the system before ticking "architecture updated", and move a
+vendored pin only with the evidence that earned the new commit.
 
 `branch-hygiene` · `pr-comment-loop` · `rewrite-pr-history` · `worktree-bootstrap` ·
-`capture-pr-screenshots` · `github-pr-screenshot-embed` · `audit-diagram-claims`
+`capture-pr-screenshots` · `github-pr-screenshot-embed` · `audit-diagram-claims` ·
+`coverage-pr-comment` · `bump-vendored-pin`
 
 ### agent-config
 
@@ -56,17 +59,21 @@ asserting what its naming implies.
 Probe a migration inside a transaction and roll it back, interrogating it as
 each role that will meet it. Make a bulk write reversible before running it.
 Catch the Supabase-managed-schema traps that pass review and fail in production.
+Sweep a repository's full history and its remote before anything goes public.
 
-`probe-migration-in-transaction` · `reversible-bulk-write` · `supabase-ci-migration-guards`
+`probe-migration-in-transaction` · `reversible-bulk-write` · `supabase-ci-migration-guards` ·
+`pre-publication-sweep`
 
 ### mobile-ui
 
 Record and verify Compose screenshot baselines, including the silent no-op where
 the task reports `PASSED` while comparing no pixels at all. Build a Compose
-component from a Figma node, bound to design tokens rather than raw values.
+component from a Figma node, bound to design tokens rather than raw values. And
+where no test can hold the claim, drive the change on a real device without
+trusting a stale frame or a tap that missed.
 
 `android-screenshot-baseline-record` · `android-screenshot-baseline-verify` ·
-`figma-to-compose-component`
+`figma-to-compose-component` · `android-verify-on-device`
 
 ## What a skill here looks like
 
@@ -78,6 +85,26 @@ a task it should decline.
 Skills are written to be **portable**: none names a path from the repo it came
 from, or assumes a folder layout. Where one can take advantage of tooling you may
 not have, it says so and degrades instead of failing.
+
+## Releases
+
+`develop` integrates, `main` is what `claude plugin marketplace add` installs.
+A workflow promotes one to the other every three days, but only when there is
+something to promote and the CI suite passes — plugins that changed get a patch
+bump, the marketplace gets a CalVer tag. Gates, couplings and how to hold a
+release: [docs/releases.md](docs/releases.md).
+
+Run the same checks CI runs, without a token or a network call:
+
+```bash
+./scripts/validate-skills.sh        # structure of every skill
+python3 scripts/validate-marketplace.py   # manifests and README vs the tree
+```
+
+**The PR template is not optional.** Start from
+[`.github/PULL_REQUEST_TEMPLATE.md`](.github/PULL_REQUEST_TEMPLATE.md), never
+free-hand — the conditional sections are deleted when empty, and every ticked
+box names something actually observed.
 
 ## Related
 

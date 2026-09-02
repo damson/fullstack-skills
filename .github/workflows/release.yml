@@ -1,0 +1,283 @@
+name: Release
+
+# Promotes develop to main on a three-day cadence, and only when there is
+# something to promote.
+#
+# The cron is daily rather than every third day: GitHub's schedule has no clean
+# three-day expression, and `*/3` on day-of-month resets at every month boundary
+# — a one-day gap after the 31st, a four-day one in February. A daily run with an
+# explicit age gate keeps the real spacing at three days and, more usefully,
+# makes "nothing to release" a logged decision instead of a silent no-op.
+#
+# This repo deliberately diverges from the harness's release policy, which never
+# merges and leaves promotion to a human. A skills marketplace carries less risk
+# than a config engine, and the gate here is the CI suite rather than a reviewer.
+on:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+  statuses: write
+
+# Never two releases at once. cancel-in-progress would be wrong: a half-finished
+# release has pushed a tag or a branch, and killing it mid-way leaves that behind.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  # Tags whatever is sitting on main untagged, then pulls develop back level.
+  #
+  # It runs on the push to main (fast path, right after a release merges) AND on
+  # the daily schedule (guaranteed path). Auto-merge performed on behalf of
+  # GITHUB_TOKEN does not raise a push event that triggers workflows, so the fast
+  # path cannot be relied on alone. Both routes are idempotent.
+  tag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Decide whether main needs a tag
+        id: decide
+        run: |
+          set -euo pipefail
+          git fetch --tags --force origin
+
+          last=$(git tag --list 'v*' --sort=-creatordate | head -n 1)
+          head=$(git rev-parse HEAD)
+          echo "last_tag=$last" >> "$GITHUB_OUTPUT"
+
+          if [ -n "$last" ] && [ "$(git rev-list -n 1 "$last")" = "$head" ]; then
+            echo "main is already tagged $last — nothing to release."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # main is only a release point once develop has been promoted into it.
+          # On a repo that has never released, main is a baseline: tagging it
+          # would publish a release containing none of the merged work, and that
+          # fresh tag would then hold the real first release behind the three-day
+          # gate in the propose job below.
+          git fetch origin develop --quiet
+          if [ -z "$last" ] && ! git merge-base --is-ancestor origin/develop HEAD; then
+            echo "No release yet and develop is ahead of main — main is a baseline,"
+            echo "not a release point. Leaving it untagged."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ -z "$last" ]; then
+            echo "No tag yet; this is the first release."
+          else
+            echo "$(git rev-list --count "$last..HEAD") commit(s) on main since $last."
+          fi
+
+          # CalVer: the marketplace releases on a calendar cadence, so the tag
+          # answers "when". Individual plugins keep semver in plugin.json, which
+          # answers "what changed" — two different questions, two schemes.
+          base="v$(date -u +%Y.%m.%d)"
+          tag="$base"
+          n=1
+          while git rev-parse -q --verify "refs/tags/$tag" > /dev/null; do
+            tag="$base.$n"
+            n=$((n + 1))
+          done
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: Compose release notes
+        if: success() && steps.decide.outputs.skip == 'false'
+        env:
+          LAST_TAG: ${{ steps.decide.outputs.last_tag }}
+        run: |
+          set -euo pipefail
+          python3 scripts/release_notes.py --since "$LAST_TAG" > notes.md
+          cat notes.md
+
+      - name: Tag and publish
+        if: success() && steps.decide.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.decide.outputs.tag }}
+        run: |
+          set -euo pipefail
+          git config user.name  'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin "refs/tags/$TAG"
+          gh release create "$TAG" --title "$TAG" --notes-file notes.md
+
+      # Every release merge leaves a commit on main that develop has never seen.
+      # The trees are identical, so nothing looks wrong and the gap goes unnoticed
+      # until something asks whether develop is behind.
+      #
+      # Because the release PR merges with a merge commit (never a squash),
+      # develop is an ancestor of main and this is a fast-forward. A squash would
+      # break that — a squash is not the commits it squashed — and the fallback
+      # below is what would catch it.
+      - name: Bring develop back level with main
+        if: success() && steps.decide.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git fetch origin develop --quiet
+
+          # develop is normally AHEAD of main between releases, and this job also
+          # runs on the daily schedule — not only after a release merge. Pushing
+          # main onto a develop that already contains it is not a fast-forward, so
+          # without this guard the first scheduled run opens a back-merge PR with
+          # no commits in it and `gh pr create` fails the job.
+          if git merge-base --is-ancestor HEAD origin/develop; then
+            echo "develop already contains main — nothing to back-merge."
+          elif git push origin HEAD:develop; then
+            echo "develop fast-forwarded to main."
+          else
+            echo "::warning::develop could not be fast-forwarded; opening a back-merge PR."
+            git push origin "HEAD:refs/heads/backmerge/$(git rev-parse --short HEAD)"
+            gh pr create --base develop \
+              --head "backmerge/$(git rev-parse --short HEAD)" \
+              --title "Back-merge main into develop" \
+              --body "main moved without develop following. Fast-forward was refused, so this needs a look."
+          fi
+
+  # Opens the release pull request, but only when all three gates agree.
+  propose:
+    needs: tag
+    # Skipped on the push-to-main run: that push IS the merge this job would be
+    # proposing. `!cancelled()` rather than `success()` so a no-op tag job (which
+    # exits 0) still lets this through, while a genuinely failed one does not.
+    if: ${{ !cancelled() && needs.tag.result == 'success' && github.event_name != 'push' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: develop
+          fetch-depth: 0
+
+      - name: Gates — changes to release, and three days since the last one
+        id: gate
+        run: |
+          set -euo pipefail
+          git fetch origin main develop --tags --force --quiet
+
+          ahead=$(git rev-list --count origin/main..origin/develop)
+          if [ "$ahead" -eq 0 ]; then
+            echo "develop is not ahead of main — nothing to release."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "develop is $ahead commit(s) ahead of main."
+
+          last=$(git tag --list 'v*' --sort=-creatordate | head -n 1)
+          if [ -n "$last" ]; then
+            age=$(( ( $(date -u +%s) - $(git log -1 --format=%ct "$last") ) / 86400 ))
+            echo "Last release $last was $age day(s) ago."
+            if [ "$age" -lt 3 ] && [ "${GITHUB_EVENT_NAME:-}" != "workflow_dispatch" ]; then
+              echo "Under the three-day cadence — holding."
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: Bump the patch version of every plugin that changed
+        if: success() && steps.gate.outputs.skip == 'false'
+        run: |
+          set -euo pipefail
+          git config user.name  'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+          # Only plugins with real changes move. Bumping all five every time would
+          # make `claude plugin update` re-fetch four plugins that did not change.
+          changed=$(git diff --name-only origin/main..origin/develop -- 'plugins/*' \
+                    | cut -d/ -f2 | sort -u)
+          if [ -z "$changed" ]; then
+            echo "No plugin content changed; versions stay where they are."
+            exit 0
+          fi
+
+          for p in $changed; do
+            python3 scripts/bump_version.py "$p"
+          done
+          git add plugins/*/.claude-plugin/plugin.json
+          if git diff --cached --quiet; then
+            echo "Versions already current."
+          else
+            git commit -m "Bump plugin versions for release"
+            git push origin HEAD:develop
+          fi
+
+      - name: Open the release pull request
+        id: pr
+        if: success() && steps.gate.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          existing=$(gh pr list --base main --head develop --state open \
+                       --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            echo "Refreshing existing release PR #$existing."
+            number="$existing"
+          else
+            python3 scripts/release_notes.py --pr-body > body.md
+            # gh pr create has no --json; it prints the PR URL, whose last path
+            # segment is the number.
+            url=$(gh pr create --base main --head develop \
+                    --title "Release $(date -u +%Y.%m.%d)" \
+                    --body-file body.md)
+            number="${url##*/}"
+            echo "Opened $url"
+          fi
+          echo "number=$number" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse origin/develop)" >> "$GITHUB_OUTPUT"
+
+      # A pull request opened with GITHUB_TOKEN raises no pull_request event, so
+      # CI never runs on it and the required check would never arrive — the PR
+      # would sit unmergeable forever. The suite is run here instead, against the
+      # exact head commit, and its result posted as the `validate` status that
+      # branch protection is waiting for. Same script, same commit, real result.
+      #
+      # If this repo ever gains a token that can trigger workflows, delete this
+      # step: the CI workflow will post the check itself.
+      - name: Run the suite and report it as the required check
+        if: success() && steps.gate.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ steps.pr.outputs.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          git checkout --quiet "$SHA"
+
+          state=success
+          ./scripts/validate-skills.sh      || state=failure
+          python3 scripts/validate-marketplace.py || state=failure
+
+          gh api --method POST "repos/$REPO/statuses/$SHA" \
+            -f state="$state" -f context=validate -f target_url="$RUN_URL" \
+            -f description="Skill structure and marketplace wiring" > /dev/null
+          echo "Posted validate=$state for $SHA"
+          [ "$state" = success ]
+
+      - name: Let it merge itself once the checks pass
+        if: success() && steps.gate.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NUMBER: ${{ steps.pr.outputs.number }}
+        run: |
+          set -euo pipefail
+          # --merge, never --squash: the back-merge in the tag job fast-forwards
+          # develop to main, which only works while develop stays an ancestor.
+          gh pr merge "$NUMBER" --auto --merge

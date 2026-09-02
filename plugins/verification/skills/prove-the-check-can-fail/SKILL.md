@@ -48,12 +48,12 @@ command pass?", this one asks "would it have caught the bug?".
 
 ## Sharp edges
 
-- **Assertions that silently no-op.** Some frameworks only assert when driven by
-  their own runner — screenshot libraries are the classic case, where the ordinary
-  test task captures nothing and passes regardless. Step 3 is how you find out.
-- **Environment-gated rendering.** A test asserting on pixels, layout or graphics can
-  pass against a stub that draws nothing. Introduce a visible defect and confirm the
-  check notices it.
+- **A check can pass against nothing at all.** Some frameworks only assert when
+  driven by their own runner — screenshot libraries are the classic case, where
+  the ordinary test task captures nothing and passes regardless — and a test
+  asserting on pixels, layout or graphics passes the same way against a stub that
+  draws nothing. Introduce a visible defect; if the check does not notice, it was
+  never looking.
 - **Generated artifacts get regenerated.** If the check reads something a generator
   produces (an installed hook, a rendered config, a build output), degrade the
   *generator*. Degrading the artifact proves nothing: a setup step or an
@@ -65,6 +65,13 @@ command pass?", this one asks "would it have caught the bug?".
   confirms a regex by running that regex counts its own false positives as
   confirmations. Validate with a DIFFERENT rule — the near-miss it must not match,
   or the side you did not count.
+- **Delete ONE occurrence, not all.** A rule stated twice by design — a policy's
+  `USING` and its `WITH CHECK`, a value repeated per environment, a guard in both
+  branches of a fork — survives a presence assertion (`toContain`, `grep -q`)
+  when either half is removed, so the mutation that should go red stays green.
+  Assert the COUNT, then mutate each occurrence in turn. The halves usually do
+  different work: an admin who cannot edit their own row under `USING` but whose
+  `WITH CHECK` forgot to say so can still write one.
 - **A run that read nothing reports perfectly.** Over an empty input set every
   assertion holds — 0 failures, all green, indistinguishable from a clean run.
   Assert on the INPUT count (files opened, rows read) before believing the result:

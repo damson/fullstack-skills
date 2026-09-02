@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "git-workflow",
-      "description": "Branch, worktree and pull-request hygiene: rebasing open PRs onto a merged base, replying to review findings, pruning dead branches, embedding screenshots that actually render, and checking a diagram still matches the system.",
+      "description": "Branch, worktree and pull-request hygiene: rebasing open PRs onto a merged base, replying to review findings, pruning dead branches, embedding screenshots that actually render, posting coverage as one sticky comment with a threshold band, and checking a diagram still matches the system.",
       "author": {
         "name": "Damien Dagnet"
       },
@@ -44,7 +44,7 @@
     },
     {
       "name": "mobile-ui",
-      "description": "Android and Compose UI work: recording and verifying screenshot baselines without the silent no-op that reports PASSED while comparing nothing, and building a Compose component from a Figma node bound to design tokens.",
+      "description": "Android and Compose UI work: recording and verifying screenshot baselines without the silent no-op that reports PASSED while comparing nothing, building a Compose component from a Figma node bound to design tokens, and verifying a change on a running device without reading a stale frame.",
       "author": {
         "name": "Damien Dagnet"
       },
