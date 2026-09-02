@@ -1,9 +1,11 @@
 ---
 name: rewrite-pr-history
 description: >
-  Use when the user asks to fix PR conflicts, drop or reorder commits on a
-  feature branch, rebase a branch onto a freshly-merged main, or otherwise
-  rewrite history on an open PR. Bundles the safe rebase → verify →
+  Use when the user asks to drop, reorder or squash commits on a feature
+  branch, rebase a branch onto a freshly-merged main, or otherwise rewrite
+  history on an open PR. Do NOT fire on plain conflict resolution — merging
+  the base branch forward fixes conflicts without a force-push and needs no
+  rewrite. Bundles the safe rebase → verify →
   force-push-with-lease → PR-state-check cycle, including SSH-agent recovery
   and per-branch authorization gates.
 ---
@@ -27,8 +29,10 @@ gh pr view <N> --json baseRefName,headRefName,mergeable,mergeStateStatus,reviewD
 
 Confirm:
 - Head branch is **not** `main`, `master`, `develop`, or any protected branch.
-- Head branch matches a user-owned naming pattern (e.g. `ai-config/*`,
-  `<user>/*`). If it looks shared, ask before rewriting.
+- Head branch is the user's to rewrite: only the user appears in
+  `git shortlog -sn origin/<base>..HEAD`, and only one open PR has this head
+  (`gh pr list --head <branch>`). Either check failing means the branch may
+  be shared — ask before rewriting.
 - If `reviewDecision` shows pending or approved reviews, surface that — review
   comments may go stale after a rewrite. Ask before continuing.
 
@@ -57,18 +61,24 @@ Use the smallest-blast-radius command for the job:
 |---|---|
 | Resolve conflicts with new main | `git rebase origin/main` |
 | Drop one commit in the middle | `git rebase --onto <base> <commit-to-drop> <branch>` |
-| Reorder / squash | `git rebase -i origin/<base>` only if the host supports interactive input — Claude Code in autonomous mode does NOT; in that case combine `git rebase --onto` + `git cherry-pick` to achieve the same result without `-i` |
+| Reorder / squash | `GIT_SEQUENCE_EDITOR=<script> git rebase -i origin/<base>` — see below; interactive `-i` without the wrapper needs terminal input agents don't have |
 | Reword last commit only | `git commit --amend` (verify HEAD is the right commit first) |
 | Split last commit | `git reset --soft HEAD~` then re-stage in parts |
 
-Non-interactive drop/reorder: `git rebase -i` requires terminal input — pipe
-edits through `GIT_SEQUENCE_EDITOR=<script> git rebase -i <base>` (the script
-does e.g. `sed -i '' 's/^pick <sha>/drop <sha>/' "$1"`).
+The `GIT_SEQUENCE_EDITOR` script edits the todo file it is handed, e.g.
+`sed -i '' 's/^pick <sha>/drop <sha>/' "$1"` — one mechanism for every
+non-interactive reorder, drop or squash.
+
+**If the rebase stops on a conflict**: resolve the conflicted files, `git add`
+them, `git rebase --continue`; repeat per commit. If a resolution is not
+obviously right, `git rebase --abort` returns the branch to its pre-rebase
+state and the question goes to the user — an aborted rebase loses nothing.
 
 Re-verify with `git log --oneline origin/<base>..HEAD` and
-`git diff origin/<base> --stat` after every step. Also check `git diff HEAD` — a
-commit adding a line already on the base branch (different context) creates a
-duplicate in the blob; the IDE removes it silently from disk.
+`git diff origin/<base> --stat` after every step, and confirm `git diff HEAD`
+is empty — a non-empty diff there means something (an editor with the file
+open, a merge tool) rewrote the working tree behind the rebase, and committing
+would silently fold that change in.
 
 ### 5. Local checks before pushing
 
