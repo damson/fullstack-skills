@@ -15,10 +15,10 @@ stdout is not a TTY.
 
 | Plugin | Skills | What it is for |
 |---|---|---|
-| **git-workflow** | 8 | Branch, worktree and pull-request hygiene |
+| **git-workflow** | 9 | Branch, worktree and pull-request hygiene |
 | **agent-config** | 8 | Writing and auditing agent instruction files |
 | **verification** | 2 | Proving a check can fail before trusting it |
-| **data-safety** | 3 | Writes that are hard to undo |
+| **data-safety** | 4 | Writes that are hard to undo |
 | **mobile-ui** | 4 | Android / Compose screenshots, Figma components, on-device checks |
 
 ### git-workflow
@@ -26,12 +26,13 @@ stdout is not a TTY.
 Rebase open PRs onto a base that has just merged, reply to review findings one
 row per finding, prune dead branches and worktrees, embed a screenshot that
 renders for reviewers on a private repo, report coverage as one sticky comment
-with a threshold band rather than a fresh number every push, and check a diagram
-still matches the system before ticking "architecture updated".
+with a threshold band rather than a fresh number every push, check a diagram
+still matches the system before ticking "architecture updated", and move a
+vendored pin only with the evidence that earned the new commit.
 
 `branch-hygiene` · `pr-comment-loop` · `rewrite-pr-history` · `worktree-bootstrap` ·
 `capture-pr-screenshots` · `github-pr-screenshot-embed` · `audit-diagram-claims` ·
-`coverage-pr-comment`
+`coverage-pr-comment` · `bump-vendored-pin`
 
 ### agent-config
 
@@ -58,8 +59,10 @@ asserting what its naming implies.
 Probe a migration inside a transaction and roll it back, interrogating it as
 each role that will meet it. Make a bulk write reversible before running it.
 Catch the Supabase-managed-schema traps that pass review and fail in production.
+Sweep a repository's full history and its remote before anything goes public.
 
-`probe-migration-in-transaction` · `reversible-bulk-write` · `supabase-ci-migration-guards`
+`probe-migration-in-transaction` · `reversible-bulk-write` · `supabase-ci-migration-guards` ·
+`pre-publication-sweep`
 
 ### mobile-ui
 
