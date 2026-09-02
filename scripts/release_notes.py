@@ -80,9 +80,14 @@ def commits(rng):
 def merged_prs(rng):
     if not rng:
         return "(none)"
-    merges = git("log", rng, "--merges", "--format=%s")
-    found = re.findall(r"Merge pull request #(\d+) ", merges)
-    return " ".join(f"#{n}" for n in found) if found else "(none — direct commits only)"
+    # Two shapes: a merge commit's "Merge pull request #N from …", and the
+    # "Subject (#N)" suffix a squash or rebase merge leaves. This repo squashes
+    # feature PRs, so counting only merge commits hides most of the batch.
+    subjects = git("log", rng, "--format=%s")
+    found = re.findall(r"Merge pull request #(\d+) ", subjects)
+    found += re.findall(r"\(#(\d+)\)$", subjects, re.MULTILINE)
+    nums = sorted({int(n) for n in found})
+    return " ".join(f"#{n}" for n in nums) if nums else "(none — direct commits only)"
 
 
 def main():
