@@ -24,8 +24,11 @@ gh pr view <N> --json baseRefName,headRefName,mergeable,mergeStateStatus,reviewD
 
 Confirm:
 - Head branch is **not** `main`, `master`, `develop`, or any protected branch.
-- The branch is yours to rewrite. If other people push to it, ask before
-  rewriting — a rewrite under someone else's feet loses their work.
+- The branch is yours to rewrite — checked, not assumed: only you appear in
+  `git shortlog -sn origin/<base>..HEAD`, and only one open PR has this head
+  (`gh pr list --head <branch>`). Either check failing means the branch may be
+  shared — ask before rewriting; a rewrite under someone else's feet loses
+  their work.
 - If `reviewDecision` shows pending or approved reviews, surface that — review
   comments anchor to commits and go stale after a rewrite. Ask before continuing.
 
@@ -63,10 +66,16 @@ editor rather than a terminal —
 `GIT_SEQUENCE_EDITOR=<script> git rebase -i <base>`, where the script edits
 `"$1"` in place (e.g. `sed -i '' 's/^pick <sha>/drop <sha>/' "$1"`).
 
+**If the rebase stops on a conflict**: resolve the conflicted files, `git add`
+them, `git rebase --continue`; repeat per commit. If a resolution is not
+obviously right, `git rebase --abort` returns the branch to its pre-rebase
+state and the question goes to the user — an aborted rebase loses nothing.
+
 Re-verify with `git log --oneline origin/<base>..HEAD` and
-`git diff origin/<base> --stat` after every step. Also check `git diff HEAD` — a
-commit re-adding a line the base already has (different context) creates a
-duplicate in the blob that tooling may silently drop from disk.
+`git diff origin/<base> --stat` after every step, and confirm `git diff HEAD`
+is empty — a non-empty diff there means something outside the rebase (an
+editor with the file open, a merge tool) rewrote the working tree, and
+committing would silently fold that change in.
 
 ### 5. Local checks before pushing
 

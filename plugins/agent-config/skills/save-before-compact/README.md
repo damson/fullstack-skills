@@ -36,9 +36,10 @@ After a 40-turn debugging session:
    without approval.
 3. Applied changes are verified (the repo's skill-structure tests or eval
    command if it ships one, an inline five-dimension rubric otherwise).
-4. `skill-opportunity-finder` runs; approved skill candidates are created
-   *now*, before compaction — authoring a good skill needs the live context
-   that compaction discards.
+4. `skill-opportunity-finder` runs (or, where that plugin is not installed,
+   the same pattern scan happens inline and says so); approved skill
+   candidates are created *now*, before compaction — authoring a good skill
+   needs the live context that compaction discards.
 5. A resume brief (Goal · Done · Next actions · Open questions · Key files) is
    written into `.claude/` with a stable `session-resume-latest.md` pointer,
    the ledger is printed, and the skill stops:
