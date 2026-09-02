@@ -2,10 +2,9 @@
 name: agent-config-audit
 description: >
   Audit AI agent configuration files (CLAUDE.md, AGENTS.md, preferences.md) for contradictions,
-  duplication, bloat, and personal/team boundary violations. Resolves the symlink chain to confirm
-  which files are actually loaded for the current project, then cross-checks them for issues.
-  Use when config files feel stale, when onboarding to a new project, or after restructuring your
-  config repo. Pass --fix to propose and apply edits after reporting.
+  duplication, bloat, and personal/team boundary violations. Use when unsure which instruction
+  files are active for a project, after restructuring a config repo, or when the same rule
+  turns up in two files with different wording.
 ---
 
 # Agent Config Audit
@@ -14,18 +13,23 @@ Audit the AI instruction files active for the current project. Report findings, 
 
 ## Step 1: Resolve the Active File Stack
 
-From the current working directory, resolve which files Claude actually loads:
+From the current working directory, resolve the project's instruction-file
+stack — items 1, 3 and 4 are loaded by the harness; 2 and 5 are audited when
+present (all five resolved; scoping flags filter afterwards — see Flags):
 
 1. **Global CLAUDE.md** — `~/.claude/CLAUDE.md` (follow symlink to source)
-2. **Global preferences** — `~/.claude/preferences.md` (follow symlink to source)
+2. **Global preferences** — `~/.claude/preferences.md`, if present
 3. **Project AGENTS.md** — look for `AGENTS.md` in the project root (follow symlink to source)
 4. **Project CLAUDE.md** — look for `CLAUDE.md` in the project root (follow symlink chain fully)
-5. **Project preferences** — `.claude/preferences.md` in the project root (follow symlink to source)
+5. **Project preferences** — `.claude/preferences.md` in the project root, if
+   present
 
 For each file found, report:
 - The logical path (e.g. `<project>/AGENTS.md`)
 - The resolved source path (e.g. `<config-repo>/workspace/<domain>/AGENTS.md`)
-- Whether it is personal or team-owned
+- Whether it is personal or team-owned. The rule: a file that resolves into
+  the user's config repo or lives under `~/.claude/` is personal; a file
+  tracked directly in the project repo is team-owned
 
 Print the stack before running checks so the user knows the scope.
 
@@ -43,28 +47,32 @@ Team files (`AGENTS.md` in the project repo) should contain **only** team conven
 - Personal story point sizing
 - Personal tool shortcuts or aliases
 
-Conversely, flag if team conventions are **missing** from personal files when they should be there for portability to new projects (e.g. architecture rules, testing conventions that the personal user always wants applied).
-
 ### 2b — Contradictions
 
 For each topic that appears in multiple files (commit format, naming, testing framework, etc.), compare the rules:
 
 - If the rules agree → `✅ OK`
-- If they differ, determine whether the difference is **intentional layering** (personal file overrides team file — acceptable) or a **genuine conflict** (two rules in the same scope that can't both be true)
+- If they differ, it is **intentional layering** only when a verified mechanism reinstates the team rule downstream; with no such mechanism it is a **genuine conflict**
 - Flag genuine conflicts as `🔴 Contradiction` with both locations and both values
 
 Example of intentional layering (not a conflict):
 > Team AGENTS.md: "commit format `<pod>: <description>`"
 > Personal CLAUDE.md: "no pod prefix in commits"
-> → Personal overrides team. This is correct — squash-merge adds the pod prefix.
+> → Here the squash-merge pipeline re-adds the prefix, so the team rule survives.
+> Check exactly three places for such a mechanism: the CI workflow files, the
+> forge's merge-strategy settings, and the repo's hooks. Found in none → report
+> the pair as unresolved and ask the user rather than marking OK.
 
 ### 2c — Duplication
 
-For each rule or section, check if the same content (verbatim or near-verbatim) appears in multiple files:
+For each rule or section, check if the same content appears in multiple files.
+Near-verbatim means the directives require the same behaviour and differ only
+in wording — if the required behaviours differ at all, route it through 2b as
+a potential contradiction instead:
 
 - Same file, different section → likely bloat in one of them
 - Same content in global preferences AND global CLAUDE.md → one is redundant; flag which to remove
-- Same content in project CLAUDE.md AND team AGENTS.md → check if it's intentional cross-project portability or accidental
+- Same content in project CLAUDE.md AND team AGENTS.md → intentional only if one of them is a symlink to the other or the personal copy says why it repeats the rule; otherwise flag as accidental duplication
 
 Report: source file + section, duplicate file + section, and recommendation (keep in X, remove from Y, or "intentional — leave both").
 
@@ -75,8 +83,8 @@ Within each file, flag:
 - Sections that are pure recaps of other sections in the same file (summary/reminders sections that restate earlier rules verbatim)
 - Generic non-actionable advice ("organize them logically", "follow best practices")
 - Reference material that could be a single pointer line (e.g. a list of 5 doc subdirectories that could be "docs in `/docs/`")
-- Standard-knowledge rules that any competent developer would know and that add noise without guidance (e.g. "Classes: PascalCase" in Kotlin)
-- Procedural checklists that assume the agent is doing human-only steps (verify these are actually agent-actionable before flagging)
+- Rules that restate the language's or framework's official style-guide default with no project-specific deviation (e.g. "Classes: PascalCase" in Kotlin) — noise a competent reader already assumes
+- Procedural checklists whose steps the agent cannot perform. The test: a step is agent-actionable if it maps to a tool invocation or a file edit; flag steps that require physical action, a GUI-only tool, or credentials the agent does not hold
 
 ### 2e — Structural health
 
@@ -132,11 +140,11 @@ Do **not** apply fixes without explicit approval. Do **not** batch-apply without
 
 ## Flags
 
-| Flag | Description |
-|------|-------------|
-| `--team` | Audit only the team AGENTS.md |
-| `--personal` | Audit only personal files (CLAUDE.md, preferences) |
-| `--fix` | After reporting, propose edits and apply on approval |
+Resolve the full stack first (Step 1), then filter by the resolved owner:
+`--personal` keeps only files classified personal, `--team` only team-owned —
+ownership comes from the classification rule, not from fixed list positions.
+`--fix` enables Step 4. `--team` and `--personal` together contradict each
+other: stop and ask which scope is meant rather than guessing a union.
 
 ## When to STOP
 
