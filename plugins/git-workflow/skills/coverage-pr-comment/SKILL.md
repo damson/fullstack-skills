@@ -8,7 +8,8 @@ description: >
   dropped and nobody noticed", or when a PR carries a bare coverage percentage
   that no reviewer acts on. Stack-agnostic — JaCoCo, lcov, Istanbul, coverage.py,
   go cover, SimpleCov, coverlet. Skip for GitLab MRs, whose discussion API needs
-  its own upsert, and skip when Codecov or Coveralls already comments.
+  its own upsert; when Codecov or Coveralls already comments, stop and ask
+  before adding a second (see When to STOP).
 ---
 
 # Coverage comment on a pull request
@@ -16,10 +17,10 @@ description: >
 A coverage comment fails in two ways, and neither one looks like a failure:
 
 1. **It appends instead of editing.** Ten pushes, ten comments, and the review
-   thread is unreadable. Fixed by a marker and an upsert (step 3).
+   thread is unreadable. Fixed by a marker and an upsert (step 4).
 2. **It reports a number with no verdict.** `47.3%` answers nothing a reviewer
    can act on — is that good, is it falling, is it about to break a rule? Fixed
-   by a delta against the base and a threshold band (steps 2 and 4).
+   by a delta against the base and a threshold band (steps 2 and 5).
 
 The output is one sticky comment carrying a headline percentage, a bar that
 doubles as a diff, a **band line** naming where the project stands, and a
@@ -59,9 +60,24 @@ merge target doubles every PR's CI time.
 artifact: degrade to absolute figures and say so. Never fail the job, and never
 print a delta you could not compute.
 
+**If the repo insists on a delta where no artifact can exist** — stacked PRs,
+whose base is a feature branch no push run ever measured — the fallback is
+rebuilding the base in the PR job, and two rules keep that delta honest:
+
+- **Both runs must measure the same file set with the same tool versions.**
+  Copy the head's coverage config over the base checkout before running it;
+  two configs that differ in `include` or `all` produce a delta with no
+  meaning that looks exactly like a real one.
+- **Give the base run the head's package manifests and lockfile, never a
+  hand-pinned dependency list.** A pinned list must be re-synced on every
+  dependency bump, and the tolerated-failure guard hides the rot: the delta
+  quietly becomes the missing-baseline dash, which reads as a base problem.
+  Borrowing the manifests leaves one honest residual — a PR that removes a
+  dependency the base still imports loses its delta, and deserves to.
+
 ### 3. Render it
 
-Two functions carry all the nuance; the rest is string formatting.
+Three functions carry all the nuance; the rest is string formatting.
 
 ```python
 COVERED, ADDED, LOST, EMPTY = "🟦", "🟩", "🟥", "⬜"
