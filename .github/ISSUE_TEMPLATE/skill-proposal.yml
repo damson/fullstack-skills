@@ -1,0 +1,39 @@
+name: Propose a new skill
+description: Something actually went wrong, would go wrong again, and a procedure would have prevented it.
+title: "[proposal] "
+labels: ["skill-proposal"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The bar (from [CONTRIBUTING](https://github.com/damson/fullstack-skills/blob/main/CONTRIBUTING.md)): a skill encodes something that
+        **actually went wrong and would go wrong again** — not something that might.
+        Measured facts from the incident are what make the rule believable later.
+  - type: textarea
+    id: incident
+    attributes:
+      label: What went wrong
+      description: The real session where not having this skill cost something. What happened, and what did it cost?
+    validations:
+      required: true
+  - type: textarea
+    id: procedure
+    attributes:
+      label: The procedure that would have prevented it
+      description: A sketch is enough — the steps, the runnable checks, and when the skill should STOP and hand back to the human.
+    validations:
+      required: true
+  - type: input
+    id: theme
+    attributes:
+      label: Theme
+      description: Which existing plugin it belongs to — or say it needs a new one.
+      placeholder: e.g. git-workflow
+    validations:
+      required: false
+  - type: checkboxes
+    id: offer
+    attributes:
+      label: Writing it
+      options:
+        - label: I'd like to write this skill myself as a PR.
