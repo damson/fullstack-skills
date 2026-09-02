@@ -15,7 +15,7 @@ stdout is not a TTY.
 
 | Plugin | Skills | What it is for |
 |---|---|---|
-| **git-workflow** | 9 | Branch, worktree and pull-request hygiene |
+| **git-workflow** | 10 | Branch, worktree and pull-request hygiene |
 | **agent-config** | 8 | Writing and auditing agent instruction files |
 | **verification** | 2 | Proving a check can fail before trusting it |
 | **data-safety** | 4 | Writes that are hard to undo |
@@ -27,12 +27,14 @@ Rebase open PRs onto a base that has just merged, reply to review findings one
 row per finding, prune dead branches and worktrees, embed a screenshot that
 renders for reviewers on a private repo, report coverage as one sticky comment
 with a threshold band rather than a fresh number every push, check a diagram
-still matches the system before ticking "architecture updated", and move a
-vendored pin only with the evidence that earned the new commit.
+still matches the system before ticking "architecture updated", move a
+vendored pin only with the evidence that earned the new commit, and wire a
+scheduled workflow so its cron actually fires — GitHub registers schedule
+triggers only from the default branch.
 
 `branch-hygiene` · `pr-comment-loop` · `rewrite-pr-history` · `worktree-bootstrap` ·
 `capture-pr-screenshots` · `github-pr-screenshot-embed` · `audit-diagram-claims` ·
-`coverage-pr-comment` · `bump-vendored-pin`
+`coverage-pr-comment` · `bump-vendored-pin` · `wire-scheduled-workflow`
 
 ### agent-config
 
