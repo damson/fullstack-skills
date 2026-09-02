@@ -18,15 +18,19 @@ to be written or reshaped:
 - "update the project's CLAUDE.md with the build commands"
 - creating a CLAUDE.md as part of scaffolding a new project
 
-It steps aside when there is no sibling to point at (greenfield — write
-normally), when the user explicitly wants a standalone file, when the existing
-CLAUDE.md is already a pointer, or when the duplication is deliberate.
+It steps aside for typo- and line-level fixes, when there is no sibling to
+point at (greenfield — write normally), when the user explicitly wants a
+standalone file, when the existing CLAUDE.md is already a pointer, when the
+duplication is deliberate — and, resolved before any comparison, when the
+sibling `AGENTS.md` is a symlink to the very CLAUDE.md being edited, which
+makes CLAUDE.md the canonical copy rather than the duplicate.
 
 ## Example
 
 A repo has an `AGENTS.md` with the team's conventions, and the planned
 CLAUDE.md would restate most of them plus two Claude-only rules. The skill
-compares section by section, finds more than half the sections marked "drop",
+applies the deletion test per section — would dropping it lose any fact or
+command a sibling does not already state? — finds more than half fail it,
 and rewrites the whole file as:
 
 ```markdown
