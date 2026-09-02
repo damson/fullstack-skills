@@ -3,15 +3,13 @@ name: pr-comment-loop
 description: >
   Use when an active branch has open PRs that may have received new comments since the
   last check. Auto-trigger after any `git push` to a feature branch, after merging a PR
-  (other open PRs may need rebase + re-review), and any time the user asks "is PR N
+  (its siblings' review threads may have moved), and any time the user asks "is PR N
   ready?" / "what's the status of PRs?" / "manage the open PRs" / "anything to address
-  in PR N?" / "review the comments". Skip if no PRs are open or if the user explicitly
+  in PR N?" / "review the PR comments". Skip if no PRs are open or if the user explicitly
   says "ignore the comments".
 ---
 
 # PR comment loop
-
-After every push to a feature branch (or any time you're asked to take stock of open PRs), close the loop on AI-reviewer and human comments instead of waiting for the user to ask.
 
 ## Procedure
 
@@ -22,24 +20,27 @@ For each open PR you have touched in this session — OR all open PRs in the cur
    gh pr view <n> --json mergeable,mergeStateStatus,statusCheckRollup,comments,baseRefName
    ```
 
-2. **Identify NEW comments** since your last reply on that PR. Compare comment `createdAt` (from `gh pr view --json comments,reviews`) against the timestamp of the latest sticky reply comment you posted (the one with `<!-- claude-review-response -->` — find it with the safe selector in step 6). If none exists yet, treat every comment as new.
+2. **Identify NEW comments** since your last reply on that PR: run the sticky-comment selector (defined once, in step 6 where it is also used to post) and compare each comment's `createdAt` against the sticky's **last-edit time**, `jq -r '.[0].updated_at' <<<"$mine"` — the selector's `select()` keeps whole REST comment objects, and creation time never advances once the sticky is edited in place. No sticky yet → every comment is new.
 
-3. **Verify each finding against the source, then classify it.** Before acting on a finding, open the cited `file:line` in the actual source. Cold-read reviewers see the diff without surrounding context and are confidently wrong often enough that applying findings unchecked introduces bugs — real examples: a missing guard reported that already existed six lines above the hunk; an empty array literal misread as a JSON object, predicting a constraint violation no constraint could produce; a changelog entry demanded in a repo with no changelog; a finding re-raised in round 4 that was applied in round 1. A finding that does not survive that check gets a 🚫 Skipped row (verdict vocabulary in step 6) citing the contradicting line — never silence.
+3. **Verify each finding against the source, then classify it.** Before acting on a finding, open the cited `file:line` in the actual source. Cold-read reviewers see the diff without surrounding context and are confidently wrong often enough that applying findings unchecked introduces bugs — the classic misses: a "missing" guard that exists just outside the hunk, a demanded convention the repo doesn't have, a finding re-raised rounds after it was applied. A finding that does not survive that check gets a 🚫 Skipped row (verdict vocabulary in step 6) citing the contradicting line — never silence.
 
-   Then parse the comment body (`.comments[].body` and `.reviews[].body` from the JSON above) for emoji headings `🔴 Critical`, `🟡 Should fix`, `🟢 Nice to have`. If the reviewer doesn't use that emoji convention, treat the entire comment as a single 🟡 finding and surface it to the user before classifying.
+   Then parse the comment body (`.comments[].body` and `.reviews[].body` from the JSON above) for emoji headings `🔴 Critical`, `🟡 Should fix`, `🟢 Nice to have`; a finding that is pure praise or explicitly requires no action classifies as 💬 Acknowledgement. If the reviewer doesn't use that emoji convention, split the comment into its distinct findings yourself and classify each by the same rules — praise is still 💬, everything actionable defaults to 🟡 — marking each classification as assumed in the reply table so the user can re-grade.
 
    | Severity | Default action | Rule |
    |---|---|---|
-   | 🔴 Critical | Apply | Skip only if file paths cited are in directories untouched by this PR — then defer with a follow-up issue link |
-   | 🟡 Should fix | Apply | Skip if the finding is a false positive (cite the contradicting code / spec line) or if it blocks PR scope (cite the scope boundary) |
+   | 🔴 Critical | Apply | The one exception: paths cited fall outside `gh pr diff <n> --name-only` — then ⏳ Defer with a follow-up issue link |
+   | 🟡 Should fix | Apply | Skip if the finding is a false positive (cite the contradicting code / spec line) or out of scope — the fix would touch files absent from `gh pr diff <n> --name-only` (cite which) |
    | 🟢 Nice to have | Apply if diff ≤ 10 lines AND ≤ 1 file | Otherwise defer with a follow-up issue link |
-   | ✅ Acknowledgement | No code action | Reference in the reply table only |
+   | 💬 Acknowledgement | No code action | Reference in the reply table only |
 
 4. **Apply fixes** via a single commit per PR with a body that:
    - References the AI review's structure (numbered findings)
-   - States explicitly "🚫 Skipped #N: <reason>" for non-applied findings (same label as the verdict table) — silence on a finding is forbidden by the project's "re-read after every push" convention
+   - Names the non-applied findings ("🚫 Skipped #N") — the reply table in
+     step 6 carries the reasons
 
-5. **Push + verify**:
+5. **Push + verify** (skip both steps 4–5 when no finding produced a code
+   change — the reply in step 6 still goes out, with its `Pushed as` line
+   replaced by "No code change this round"):
    ```bash
    git push
    gh pr view <n> --json mergeable,mergeStateStatus
@@ -78,11 +79,9 @@ For each open PR you have touched in this session — OR all open PRs in the cur
    | ✅ **Applied** | The fix landed in the same push. Cite the file + line. | No (action column shows the change) |
    | 🚫 **Skipped** | The finding will NOT be addressed — neither now nor later. | YES — one-line reason (false positive, out of scope, intentional design, etc.) |
    | ⏳ **Deferred** | The fix is real but not landing in this PR. | YES — link the follow-up issue / PR / TODO marker |
-   | 💬 **Acknowledged** | ✅-style "what looks good" notes from the reviewer. No action expected. | No |
+   | 💬 **Acknowledged** | Praise / "what looks good" notes from the reviewer. No action expected. | No |
 
-   Forbidden: vague verdicts like "Considered", "Noted", "Reviewed",
-   "Justify-skip" (use 🚫 Skipped with reason instead). The whole point
-   is unambiguity.
+
 
    ### Template
 
@@ -95,7 +94,7 @@ For each open PR you have touched in this session — OR all open PRs in the cur
    | 🟡 #1 <short title> | ✅ Applied | <file:line + one-line summary> |
    | 🟡 #2 <short title> | 🚫 Skipped | <one-line reason — false positive / scope / intentional> |
    | 🟢 #3 <short title> | ⏳ Deferred | <follow-up reference> |
-   | ✅ #4 <short title> | 💬 Acknowledged | — |
+   | 💬 #4 <short title> | 💬 Acknowledged | — |
 
    Pushed as `<sha>`.
    ```
@@ -122,6 +121,8 @@ For each open PR you have touched in this session — OR all open PRs in the cur
 
 ## When to STOP and ask
 
+- `gh` is unauthenticated, or posting/patching the comment is refused — stop
+  and hand the user the prepared reply body rather than retrying blind.
 - An 🔴 finding's fix is non-trivial AND ambiguous (would require a design call).
 - A finding contradicts an earlier decision in the session — surface the contradiction before re-litigating.
 - All CI checks are red and root cause isn't obvious — don't push speculative fixes.
