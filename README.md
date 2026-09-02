@@ -3,9 +3,14 @@
 *Hard-won habits for [Claude Code](https://claude.com/claude-code), packaged so
 you don't have to win them the hard way too.*
 
-Welcome! This is a marketplace of **28 skills in 5 themed plugins** — small,
-careful procedures your agent picks up automatically when a task calls for
-them: rebasing a stack of PRs without losing one, proving a screenshot test
+[![CI](https://github.com/damson/fullstack-skills/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/damson/fullstack-skills/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/damson/fullstack-skills?label=release&color=blue)](https://github.com/damson/fullstack-skills/releases/latest)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Made for Claude Code](https://img.shields.io/badge/made%20for-Claude%20Code-d97757.svg)](https://claude.com/claude-code)
+
+👋 **Welcome!** This is a marketplace of **28 skills in 5 themed plugins** —
+small, careful procedures your agent picks up automatically when a task calls
+for them: rebasing a stack of PRs without losing one, proving a screenshot test
 actually compared pixels, probing a migration without leaving a trace.
 
 What holds them together is where they came from. **Every skill here was
@@ -13,6 +18,16 @@ extracted from a real session where not having it cost something** — a check
 that could never fail, a release that could not tag itself, forty-seven stale
 branches nobody could see. The measured facts stayed in the text, and so did
 the scars: each skill knows not just what to do, but when to stop and ask.
+
+**Jump to:**
+[Quick start](#-quick-start) ·
+[Pick your themes](#-pick-your-themes)
+([git-workflow](#git-workflow) · [agent-config](#agent-config) ·
+[verification](#verification) · [data-safety](#data-safety) ·
+[mobile-ui](#mobile-ui)) ·
+[What a skill looks like](#-what-a-skill-here-looks-like) ·
+[Contributing](#-contributing) ·
+[Releases](#-releases)
 
 ## 🚀 Quick start
 
@@ -23,8 +38,8 @@ claude plugin marketplace add damson/fullstack-skills
 claude plugin install git-workflow@fullstack-skills --yes
 ```
 
-Swap `git-workflow` for any plugin in the table below, and install as many as
-you like. Both commands are safe to re-run (idempotent, exit `0`), `--yes` is
+Swap `git-workflow` for any plugin in [the table below](#-pick-your-themes),
+and install as many as you like. Both commands are safe to re-run (idempotent, exit `0`), `--yes` is
 only required when stdout is not a TTY, and `claude plugin update` re-fetches
 just the plugins whose version moved.
 
@@ -45,8 +60,10 @@ example — start with any link below.
 | **data-safety** | 4 | Writes that are hard to undo |
 | **mobile-ui** | 4 | Android / Compose screenshots, Figma components, on-device checks |
 
-Not sure where to begin? **verification** is two skills, takes a minute to
-read, and changes how you look at every green checkmark you'll ever see again.
+Not sure where to begin? **[verification](#verification)** is two skills,
+takes a minute to read, and changes how you look at every green checkmark
+you'll ever see again. (And if you only ever install one plugin, that's the
+one we'd hand you.)
 
 ### git-workflow
 
@@ -142,7 +159,10 @@ may not have, it says so and degrades instead of failing.
 
 Found a rough edge? That's exactly the kind of thing this repo is made of —
 a skill that stopped matching its tool's current behaviour is a bug worth
-reporting even without a fix, and issues are as welcome as pull requests.
+reporting even without a fix, and
+[opening an issue](https://github.com/damson/fullstack-skills/issues/new) is
+as welcome as a pull request. First contribution? A worked example that made
+a skill's README clearer counts too.
 
 The bar for a new skill is the lineage above: it encodes something that
 actually went wrong and would go wrong again, not something that might.
