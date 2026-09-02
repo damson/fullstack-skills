@@ -7,17 +7,13 @@ description: >
   learnings then compact". NEVER fire unsolicited. This skill APPLIES changes
   (CLAUDE.md / preference-file additions, memory, new skills) and writes a resume
   brief, then stops for the user to run /compact — it never runs /compact itself.
-  Skip when the session has < ~15 substantive turns (too thin to have learnings),
-  when a high-stakes op is in flight (deploy, mid-merge, incident), or on someone
+  A session with < ~15 substantive turns is too thin to have learnings — the
+  procedure then skips straight to the resume brief. Defer entirely when a
+  high-stakes op is in flight (deploy, mid-merge, incident) or on someone
   else's transcript.
 ---
 
 # Save before compact
-
-A self-driving pre-compaction gate: capture what the session taught (each addition
-approved and scored), suggest and optionally create skills, snapshot how to
-resume, then stop for the user to run `/compact` — the one action the skill cannot
-take itself.
 
 ## Procedure
 
@@ -28,7 +24,7 @@ conditions.
 
 - Count substantive turns (ignore < 10-word acknowledgements: `thanks`, `ok`,
   `yes`, `nice`). If `< 15`, say so and skip straight to the resume brief (Step 8)
-  — a thin session has nothing worth persisting.
+  — nothing worth persisting, but the pick-up note still gets written.
 - Detect context: is there a `CLAUDE.md` / `AGENTS.md` nearby? a domain registry
   (`config/domains.conf`)? an eval harness (`just eval` / `evals/run-skill-eval.sh`)?
   Record what's available — later steps branch on it.
@@ -74,10 +70,13 @@ applied/skipped ledger.
 After applying:
 - **Structural**: if any skill file was touched, `bats tests/skills.bats`;
   otherwise sanity-check the edited file still parses/renders.
-- **Score** the changed files: `just eval <domain>` / `run-skill-eval.sh` if the
-  harness exists (read the score from `evals/results/…-RAW.txt`, stripping ```json
-  fences); otherwise an inline rubric on the 5 dimensions (clarity, conciseness,
-  completeness, consistency, actionability).
+- **Score** the changed files with the repo's eval command if one exists,
+  reading the **newest** result artifact it writes and checking its mtime —
+  a stale artifact from a previous run reads exactly like a fresh score;
+  otherwise an inline rubric — score clarity, conciseness, completeness,
+  consistency and actionability 1–5 each against "a capable session could act on
+  this without guessing", and map the /25 total to grades as the harness does:
+  A ≥ 23, B ≥ 20, C ≥ 17, D ≥ 14, else F.
 - A score regression or a violated rule (pointer, em-dash, secret) → surface it
   and offer to tighten or revert. Never silently ship a regression.
 
@@ -90,7 +89,9 @@ Skip entirely if no memory store exists.
 ### Step 7 — Suggest & create skills
 
 Invoke `skill-opportunity-finder` (Skill tool) to surface repeated patterns worth
-a new skill. Present each candidate — name · one-line rationale · concrete past
+a new skill; where it is not installed, scan for its patterns inline — repeated
+corrections, repeated manual operations, repeated discovery work — and say the
+scan was inline. Present each candidate — name · one-line rationale · concrete past
 trigger. For each the user **approves, create it now, before compaction**, via the
 skill-verification loop: write the new `SKILL.md` → run the repo's skill structure
 tests → score it with the repo's eval command (inline rubric where no harness) →
@@ -101,8 +102,8 @@ into the resume brief for later. Skip the step if no repeated pattern surfaced.
 
 ### Step 8 — Resume brief
 
-Compose a tight *pick-up-here* note: **Goal · Done · Next actions · Open
-questions · Key files/commands/decisions**. Save it, then mirror it to a stable
+Compose a tight *pick-up-here* note — never a transcript: **Goal · Done ·
+Next actions · Open questions · Key files/commands/decisions**. Save it, then mirror it to a stable
 pointer:
 
 ```bash
@@ -110,7 +111,7 @@ repo=$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")
 branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null | tr '/' '-'); : "${branch:=nobranch}"
 ts=$(date +%Y%m%d-%H%M%S)
 sid=$(echo "${CLAUDE_SESSION_ID:-$PWD}" | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -1); : "${sid:=nosession}"
-dir=.claude; mkdir -p "$dir" 2>/dev/null || dir="$SCRATCHPAD"   # fallback if repo not writable
+dir=.claude; mkdir -p "$dir" && [ -w "$dir" ] || dir="${TMPDIR:-/tmp}"   # fall back if the repo dir is unwritable
 f="$dir/${repo}-${branch}-${ts}-${sid}.md"
 ```
 
@@ -130,14 +131,11 @@ Stop. The user presses `/compact`.
 
 ## When to STOP
 
-- **Nothing to save** — thin session (Step 1), or the user skipped every addition
-  → no writes; go straight to the resume brief + handoff.
 - **No per-item approval** → do not apply an addition or create a skill; a
   declined skill is recorded in the resume brief, not created.
-- **No eval harness** → inline rubric, and say so; never claim a `just eval` score
-  that wasn't produced.
-- **Score regression / violated rule** (pointer, em-dash, secret) → surface and
-  offer to tighten or revert; do not ship silently.
-- **High-stakes op in flight, or another operator's transcript** → defer with one
-  line and stop.
-- **Resume brief** stays a tight pick-up note, never a transcript.
+- **Score regression, or the edit breaks a rule the repo enforces** (fattening
+  a file kept as a one-line pointer, a character its lint bans, anything a
+  secret scanner would catch) → surface and offer to tighten or revert; do not
+  ship silently.
+- Steps 1 and 5 carry their own short-circuits (thin session, high-stakes op,
+  no harness); when one fires, say so in one line rather than continuing.
