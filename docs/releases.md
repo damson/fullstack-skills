@@ -23,7 +23,10 @@ it reaches `main`.
 `.github/workflows/release.yml` runs daily and asks three questions. All three
 must say yes, or it logs why it is holding and exits:
 
-1. **Is `develop` ahead of `main`?** Nothing to release, no release.
+1. **Does `develop` carry content `main` does not?** Measured as a tree diff,
+   not a commit count: after a squashed release plus its back-merge, `develop`
+   is "ahead" by every commit the squash absorbed while carrying nothing new,
+   and a count gate would propose an empty release. Identical trees, no release.
 2. **Is the newest tag at least three days old?** This is what makes the cadence
    three days. It is enforced in the job rather than in the cron expression
    because GitHub's schedule has no clean three-day form — `*/3` on day-of-month
@@ -63,6 +66,13 @@ unchecked. They move together or not at all.
 back-merge fast-forwards `develop` to `main`, which only works while `develop`
 is an ancestor of `main`. A squash is not the commits it squashed, so it breaks
 that relationship and the next back-merge falls back to opening a PR.
+
+A squash is no longer fatal — v2026.09.02 went in as one, and it taught the
+tag job to treat identical trees as "promoted" so the release still tags — but
+it costs a manual back-merge review and muddies `develop`'s history. The
+mechanical guard is a repository ruleset restricting merges into `main` to
+merge commits (Settings → Rules, a `pull_request` rule with
+`allowed_merge_methods: ["merge"]`); prose warnings do not gate UI buttons.
 
 ## Holding a release
 
