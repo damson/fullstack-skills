@@ -1,11 +1,12 @@
 ---
 name: agent-config-audit
 description: >
-  Audit AI agent configuration files (CLAUDE.md, AGENTS.md, preferences.md) for contradictions,
-  duplication, bloat, and personal/team boundary violations. Resolves the symlink chain to confirm
-  which files are actually loaded for the current project, then cross-checks them for issues.
-  Use when config files feel stale, when onboarding to a new project, or after restructuring your
-  config repo. Pass --fix to propose and apply edits after reporting.
+  Audit AI agent configuration files (CLAUDE.md, AGENTS.md, preference files) for contradictions,
+  duplication, bloat, and personal/team boundary violations. Resolves which files are actually
+  loaded for the current project — following symlinks where the setup uses them — then
+  cross-checks them for issues. Use when config files feel stale, when onboarding to a new
+  project, or after restructuring how your config is organised. Pass --fix to propose and apply
+  edits after reporting.
 ---
 
 # Agent Config Audit
@@ -16,15 +17,19 @@ Audit the AI instruction files active for the current project. Report findings, 
 
 From the current working directory, resolve which files Claude actually loads:
 
-1. **Global CLAUDE.md** — `~/.claude/CLAUDE.md` (follow symlink to source)
-2. **Global preferences** — `~/.claude/preferences.md` (follow symlink to source)
-3. **Project AGENTS.md** — look for `AGENTS.md` in the project root (follow symlink to source)
-4. **Project CLAUDE.md** — look for `CLAUDE.md` in the project root (follow symlink chain fully)
-5. **Project preferences** — `.claude/preferences.md` in the project root (follow symlink to source)
+1. **Global CLAUDE.md** — `~/.claude/CLAUDE.md`
+2. **Global preference/rule files** — whatever else `~/.claude/` loads
+   (`preferences.md`, `.claude/rules/*` — take what exists, don't assume names)
+3. **Project AGENTS.md** — `AGENTS.md` in the project root
+4. **Project CLAUDE.md** — `CLAUDE.md` in the project root
+5. **Project preference/rule files** — under the project's `.claude/`
+
+Any of these may be a symlink into a config repo — follow the chain to its
+source (`readlink -f`) so the audit edits the real file, not a link.
 
 For each file found, report:
 - The logical path (e.g. `<project>/AGENTS.md`)
-- The resolved source path (e.g. `<config-repo>/workspace/<domain>/AGENTS.md`)
+- The resolved source path, where it differs (e.g. `<config-repo>/<domain>/AGENTS.md`)
 - Whether it is personal or team-owned
 
 Print the stack before running checks so the user knows the scope.
@@ -78,11 +83,14 @@ Within each file, flag:
 - Standard-knowledge rules that any competent developer would know and that add noise without guidance (e.g. "Classes: PascalCase" in Kotlin)
 - Procedural checklists that assume the agent is doing human-only steps (verify these are actually agent-actionable before flagging)
 
-### 2e — Structural health
+### 2e — Structural health (only where the setup uses a config repo)
+
+Skip this check entirely when Step 1 found no symlinks — plain files in place
+are a valid setup, not a finding. Where symlinks exist:
 
 - Check that each file's symlink chain resolves to a real file (no broken links)
-- Check that project preferences are symlinked to the config repo (not standalone copies that can drift)
-- Check that global preferences are symlinked to the config repo
+- Check that files meant to be centralised are symlinked, not standalone copies
+  that can drift from the config repo
 
 ## Step 3: Report
 
