@@ -7,10 +7,9 @@ description: >
   take away from this session" / "let's reflect on this session". NEVER fire
   unsolicited — this skill produces evaluative feedback on the user's prompting,
   and reflection without consent is unwelcome. Skip when the session has fewer
-  than ~15 substantive turns (signal too thin), when the user is mid-incident /
-  mid-deploy, or when `prompt-coach`, `skill-opportunity-finder`, or
-  `claude-md-management:claude-md-improver` has already been invoked in the
-  current session.
+  than ~15 substantive turns (signal too thin), or when the user is mid-incident /
+  mid-deploy. If a sub-skill already ran this session, the retro asks whether
+  to re-run or reuse its output rather than silently duplicating it.
 ---
 
 # Session retrospective
@@ -37,7 +36,9 @@ The skill is a **signal** producer — it never applies changes itself. Each sec
 
    > You ran `<sub-skill>` ~N turns ago. Re-run as part of the retro, or reuse that output?
 
-3. **Operational state check**. If a high-stakes operation is in flight (active deploy, mid-merge with conflicts, mid-incident), defer with one line:
+3. **Operational state check**. Scan the last ~5 turns for a deploy, merge,
+   rebase, migration or incident command whose completion was never confirmed
+   — that is the in-flight test. If one is found, defer with one line:
 
    > Retro deferred until the operation lands. Ping me again once it's done.
 
@@ -47,7 +48,7 @@ Via the Skill tool: invoke `prompt-coach` with explicit Mode B framing ("session
 
 Expected shape: 4Ds table (Delegation / Description / Discernment / Diligence), weakest-pattern diagnosis, one case study with rewrite.
 
-If `prompt-coach` declines (e.g. the user said "ignore my prompts" earlier in the session), record the skip with a one-line reason and continue.
+If `prompt-coach` declines (e.g. the user said "ignore my prompts" earlier in the session), or a sub-skill cannot be invoked at all (plugin not installed, name not resolved), record the section as skipped with a one-line reason and continue — the same rule applies to Steps 3 and 4.
 
 ### Step 3 — Invoke `skill-opportunity-finder`
 
@@ -97,7 +98,7 @@ The skill ends with the report and a single question. No edits, no commits, no P
 
 ## Output discipline
 
-- Keep the total report under ~80 lines for a typical 30-turn session. If any sub-skill's output is large, summarize in the stitch + link / refer to its full output.
+- Keep the total report under ~80 lines for a typical 30-turn session. If a sub-skill's output is large, summarize it in the stitch and say which earlier reply carries the full version.
 - Preserve sub-skill output verbatim — don't paraphrase the 4Ds scores or the candidate names. The sub-skills are the source of truth on their own axis.
 - The "Suggested next actions" section is YOUR synthesis. Pick exactly one item per axis. If a sub-skill returned nothing meaningful for its axis, write "(none — <axis> looks healthy)".
 
@@ -110,7 +111,6 @@ The skill ends with the report and a single question. No edits, no commits, no P
 
 ## What to NEVER do
 
-- ❌ Apply CLAUDE.md edits or write SKILL.md files inline — the orchestrator is report-only; the user runs the apply phase.
 - ❌ Lecture or moralize on prompting. The 4Ds are diagnostic, not judgmental.
 - ❌ Bury "Skipped" sub-skills. If one of the three didn't run, say so up front in the report.
 - ❌ Inline the sub-skill procedures. Always invoke via the Skill tool.
