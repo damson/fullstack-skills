@@ -14,7 +14,6 @@ description: >
 This skill scores the user's prompts on four dimensions, identifies the weakest, and proposes a rewrite. The goal is to make the user a more efficient operator over time — not to lecture.
 
 Sibling skills:
-- `brief-as-prod` — proactive (transforms terse prompts BEFORE execution).
 - `skill-opportunity-finder` — surfaces repetition patterns to skillify.
 - `prompt-coach` (this one) — retrospective scoring with concrete rewrites.
 

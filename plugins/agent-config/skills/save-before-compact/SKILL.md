@@ -29,9 +29,10 @@ conditions.
 - Count substantive turns (ignore < 10-word acknowledgements: `thanks`, `ok`,
   `yes`, `nice`). If `< 15`, say so and skip straight to the resume brief (Step 8)
   — a thin session has nothing worth persisting.
-- Detect context: is there a `CLAUDE.md` / `AGENTS.md` nearby? a domain registry
-  (`config/domains.conf`)? an eval harness (`just eval` / `evals/run-skill-eval.sh`)?
-  Record what's available — later steps branch on it.
+- Detect context: is there a `CLAUDE.md` / `AGENTS.md` nearby? a skill-structure
+  test suite or a config eval command, if the repo ships either (check its
+  README / justfile / package scripts — do not assume names)? Record what's
+  available — later steps branch on it.
 - Defer (one line, then stop) if a high-stakes op is in flight — scan the last
   ~5 turns for a deploy / merge / rebase / migration / incident command whose
   completion was never confirmed — or if this is another operator's transcript.
@@ -72,12 +73,13 @@ applied/skipped ledger.
 ### Step 5 — Verify & score
 
 After applying:
-- **Structural**: if any skill file was touched, `bats tests/skills.bats`;
-  otherwise sanity-check the edited file still parses/renders.
-- **Score** the changed files: `just eval <domain>` / `run-skill-eval.sh` if the
-  harness exists (read the score from `evals/results/…-RAW.txt`, stripping ```json
-  fences); otherwise an inline rubric on the 5 dimensions (clarity, conciseness,
-  completeness, consistency, actionability).
+- **Structural**: if any skill file was touched, run the repo's skill-structure
+  tests (found in Step 1); otherwise sanity-check the edited file still
+  parses/renders.
+- **Score** the changed files with the repo's eval command if Step 1 found one,
+  reading the score from wherever that command writes it; otherwise an inline
+  rubric on the 5 dimensions (clarity, conciseness, completeness, consistency,
+  actionability).
 - A score regression or a violated rule (pointer, em-dash, secret) → surface it
   and offer to tighten or revert. Never silently ship a regression.
 
@@ -134,7 +136,7 @@ Stop. The user presses `/compact`.
   → no writes; go straight to the resume brief + handoff.
 - **No per-item approval** → do not apply an addition or create a skill; a
   declined skill is recorded in the resume brief, not created.
-- **No eval harness** → inline rubric, and say so; never claim a `just eval` score
+- **No eval harness** → inline rubric, and say so; never claim a harness score
   that wasn't produced.
 - **Score regression / violated rule** (pointer, em-dash, secret) → surface and
   offer to tighten or revert; do not ship silently.

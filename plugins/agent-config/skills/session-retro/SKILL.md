@@ -23,6 +23,9 @@ Orchestrates three existing skills into one unified end-of-session report:
 | `skill-opportunity-finder` | Repeated patterns worth bundling into new skills |
 | `claude-md-management:claude-md-improver` | Whether the project's CLAUDE.md files reflect what shipped |
 
+The first two sub-skills ship in this plugin. The third is a separate plugin the
+session may not have — its axis degrades to a skip, never a failure (Step 4).
+
 The skill is a **signal** producer — it never applies changes itself. Each section ends with a "want me to act on this?" handoff so the user controls when to write.
 
 ## Procedure
@@ -56,6 +59,11 @@ Via the Skill tool: invoke `skill-opportunity-finder`. Capture the output verbat
 Expected shape: candidate skills in priority order, each with name + one-line rationale + one concrete past trigger. Each candidate ALSO carries a draft SKILL.md frontmatter — keep it in the captured output but do not write the file in this orchestrator.
 
 ### Step 4 — Invoke `claude-md-management:claude-md-improver` in report-only mode
+
+That skill is a separate plugin. If it is not among the skills available in this
+session, skip the axis: write "(skipped — `claude-md-improver` not installed)"
+in section 3 of the report and continue — never fail the retro over a missing
+optional dependency, and never inline your own imitation of it.
 
 Via the Skill tool: invoke `claude-md-management:claude-md-improver`. Capture output up to and including the per-file quality table and the proposed diffs. Do NOT request, accept, or forward any "apply these changes?" confirmation — the orchestrator is report-only. If the sub-skill prompts to apply, decline on behalf of the orchestrator and continue.
 

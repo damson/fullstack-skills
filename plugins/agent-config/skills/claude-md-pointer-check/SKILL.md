@@ -4,8 +4,8 @@ description: >
   Use before creating or substantially editing any CLAUDE.md file. Detects
   when a sibling AGENTS.md or README.md already covers the planned content,
   and rewrites the CLAUDE.md as a pointer + Claude-only delta instead of a
-  duplicate. Prevents the "byte-for-byte duplicate" anti-pattern the eval
-  system penalizes on conciseness and consistency.
+  duplicate. Prevents the "byte-for-byte duplicate" anti-pattern that costs
+  conciseness and lets the copies drift apart.
 ---
 
 # CLAUDE.md pointer check
@@ -41,10 +41,10 @@ For each section of the planned CLAUDE.md:
 
 Examples of legitimate Claude-only directives:
 - "`.claude/settings.json` cannot be auto-written from this repo"
-- "Evaluator non-determinism ±1–2 — don't claim a trend from a single run"
-- "When adding a domain, edit `config/domains.conf` only — never touch scripts"
-  (a Claude-behavior rule the human reader of README doesn't need)
-- "Never push to `main`; use the pre-installed hook + `bin/sync-back.sh`"
+- "The scoring harness is non-deterministic ±1–2 — don't claim a trend from a single run"
+- "When adding an entry, edit the registry file only — never touch the scripts
+  that read it" (a Claude-behavior rule the human reader of README doesn't need)
+- "Never push to `main`; use the pre-installed hook + the sync script"
 
 Examples of content that belongs **elsewhere**:
 - Build/test commands → README
@@ -79,8 +79,8 @@ git flow. The directives below are Claude-only and don't belong in README.
 
 ### 4. Lint sibling for subjective phrasing
 
-While here, scan the sibling AGENTS.md / README for phrases the eval system
-flags as not-actionable:
+While here, scan the sibling AGENTS.md / README for phrases that read as rules
+but cannot be acted on:
 - "leave it better than you found it"
 - "stay scoped"
 - "focus on core business logic"
