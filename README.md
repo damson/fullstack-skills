@@ -98,6 +98,11 @@ Run the same checks CI runs, without a token or a network call:
 python3 scripts/validate-marketplace.py   # manifests and README vs the tree
 ```
 
+**The PR template is not optional.** Start from
+[`.github/PULL_REQUEST_TEMPLATE.md`](.github/PULL_REQUEST_TEMPLATE.md), never
+free-hand — the conditional sections are deleted when empty, and every ticked
+box names something actually observed.
+
 ## Related
 
 The engine these were extracted from — a domain registry, an LLM rubric that
