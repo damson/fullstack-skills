@@ -157,30 +157,16 @@ may not have, it says so and degrades instead of failing.
 
 ## 🤝 Contributing
 
-Found a rough edge? That's exactly the kind of thing this repo is made of —
-a skill that stopped matching its tool's current behaviour is a bug worth
-reporting even without a fix, and
-[opening an issue](https://github.com/damson/fullstack-skills/issues/new) is
-as welcome as a pull request. First contribution? A worked example that made
-a skill's README clearer counts too.
+Found a rough edge? That's exactly the kind of thing this repo is made of — a
+skill that stopped matching its tool's current behaviour is a bug worth
+reporting even without a fix, and small contributions count: a clearer worked
+example, a sharper trigger, a STOP case you hit in the wild. The bar for a
+new skill is the lineage above — it encodes something that actually went wrong
+and would go wrong again.
 
-The bar for a new skill is the lineage above: it encodes something that
-actually went wrong and would go wrong again, not something that might.
-Structure is enforced mechanically, with the same two checks CI runs — no
-token, no network:
-
-```bash
-./scripts/validate-skills.sh              # structure of every skill
-python3 scripts/validate-marketplace.py   # manifests and README vs the tree
-```
-
-Three conventions the validators cannot see:
-
-1. Start the PR description from [the template](.github/PULL_REQUEST_TEMPLATE.md),
-   never free-hand.
-2. A skill added, removed or materially changed updates this README's table
-   and list, and minor-bumps its plugin's version, in the same PR.
-3. Agent-facing rules for working in this repo live in [CLAUDE.md](CLAUDE.md).
+**[CONTRIBUTING.md](CONTRIBUTING.md) is the complete guide** — ways to
+contribute, what a skill ships as, the two validators to run before pushing,
+and the conventions they cannot see.
 
 ## 📦 Releases
 
