@@ -1,7 +1,18 @@
 # fullstack-skills
 
-A Claude Code marketplace of skills, grouped by theme so you install only what
+Skills for [Claude Code](https://claude.com/claude-code), distilled from real
+working sessions — grouped by theme into five plugins so you install only what
 you actually work in.
+
+A skill is a procedure the agent loads when a task matches it: how to rebase a
+stack of PRs without losing one, how to prove a screenshot test actually
+compared pixels, how to probe a migration without leaving a trace. The ones
+here share a lineage: **each was extracted from a session where the lack of it
+cost something** — a check that could never fail, a release that could not tag
+itself, forty-seven stale branches nobody could see. The measured facts stayed
+in the text.
+
+## Quick start
 
 ```bash
 claude plugin marketplace add damson/fullstack-skills
@@ -9,7 +20,14 @@ claude plugin install git-workflow@fullstack-skills --yes
 ```
 
 Both commands are idempotent and exit `0` on a re-run. `--yes` is required when
-stdout is not a TTY.
+stdout is not a TTY. Repeat the install for any other theme in the table below;
+`claude plugin update` re-fetches only plugins whose version moved.
+
+You don't invoke a skill so much as walk into it: each one declares the
+situations and phrases it fires on, and the agent picks it up when your task
+matches — "rebase the open PRs", "do the baselines still pass", a push to a
+branch with an open PR. Every skill also documents its triggers in a README
+beside its procedure, so you can browse what you installed.
 
 ## The themes
 
@@ -82,7 +100,7 @@ trusting a stale frame or a tap that missed.
 Every skill carries frontmatter whose `name` matches its folder, a `## Procedure`
 (or `## Step N`) section, and a **`## When to STOP`** section. That last one is
 the part most skill collections leave out, and it is what stops a skill firing on
-a task it should decline.
+a task it should decline — the difference between a procedure and a hazard.
 
 Skills are written to be **portable**: none names a path from the repo it came
 from, or assumes a folder layout. Where one can take advantage of tooling you may
@@ -92,6 +110,26 @@ Beside every `SKILL.md` sits a `README.md` — the human-facing half: what the
 skill produces, the phrases that reach it, a worked example, and the sibling
 skills it hands off to. The `SKILL.md` stays the procedure the agent follows.
 
+## Contributing
+
+Issues and pull requests are welcome — a skill that stopped matching its tool's
+current behaviour is a bug worth reporting even without a fix. The bar for a
+new skill is the lineage above: it encodes something that actually went wrong
+and would go wrong again, not something that might. Style and structure are
+enforced mechanically:
+
+```bash
+./scripts/validate-skills.sh              # structure of every skill
+python3 scripts/validate-marketplace.py   # manifests and README vs the tree
+```
+
+Those are the same two checks CI runs — no token, no network. Three conventions
+the validators cannot see: start the PR description from
+[the template](.github/PULL_REQUEST_TEMPLATE.md), never free-hand; a skill
+added, removed or materially changed updates this README's table and list and
+minor-bumps its plugin's version in the same PR; and agent-facing rules for
+working in this repo live in [CLAUDE.md](CLAUDE.md).
+
 ## Releases
 
 `develop` integrates, `main` is what `claude plugin marketplace add` installs.
@@ -100,22 +138,10 @@ something to promote and the CI suite passes — plugins that changed get a patc
 bump, the marketplace gets a CalVer tag. Gates, couplings and how to hold a
 release: [docs/releases.md](docs/releases.md).
 
-Run the same checks CI runs, without a token or a network call:
-
-```bash
-./scripts/validate-skills.sh        # structure of every skill
-python3 scripts/validate-marketplace.py   # manifests and README vs the tree
-```
-
-**The PR template is not optional.** Start from
-[`.github/PULL_REQUEST_TEMPLATE.md`](.github/PULL_REQUEST_TEMPLATE.md), never
-free-hand — the conditional sections are deleted when empty, and every ticked
-box names something actually observed.
-
 ## Related
 
 The engine these were extracted from — a domain registry, an LLM rubric that
 scores config quality, and a `bats` suite that enforces skill structure — lives
 separately in `agent-config-harness`.
 
-MIT licensed.
+[MIT licensed](LICENSE).
