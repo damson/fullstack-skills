@@ -54,11 +54,11 @@ example — start with any link below.
 
 | Plugin | Skills | What it is for |
 |---|---|---|
-| **git-workflow** | 10 | Branch, worktree and pull-request hygiene |
-| **agent-config** | 8 | Writing and auditing agent instruction files |
-| **verification** | 2 | Proving a check can fail before trusting it |
-| **data-safety** | 4 | Writes that are hard to undo |
-| **mobile-ui** | 4 | Android / Compose screenshots, Figma components, on-device checks |
+| **[git-workflow](plugins/git-workflow/README.md)** | 10 | Branch, worktree and pull-request hygiene |
+| **[agent-config](plugins/agent-config/README.md)** | 8 | Writing and auditing agent instruction files |
+| **[verification](plugins/verification/README.md)** | 2 | Proving a check can fail before trusting it |
+| **[data-safety](plugins/data-safety/README.md)** | 4 | Writes that are hard to undo |
+| **[mobile-ui](plugins/mobile-ui/README.md)** | 4 | Android / Compose screenshots, Figma components, on-device checks |
 
 Not sure where to begin? **[verification](#verification)** is two skills,
 takes a minute to read, and changes how you look at every green checkmark
