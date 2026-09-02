@@ -1,10 +1,10 @@
 ---
 name: agent-config-audit
 description: >
-  Audit AI agent configuration files (CLAUDE.md, AGENTS.md, preferences.md) for contradictions,
-  duplication, bloat, and personal/team boundary violations. Use when unsure which instruction
-  files are active for a project, after restructuring a config repo, or when the same rule
-  turns up in two files with different wording.
+  Audit AI agent configuration files (CLAUDE.md, AGENTS.md, preference files) for
+  contradictions, duplication, bloat, and personal/team boundary violations. Use when unsure
+  which instruction files are active for a project, after restructuring how your config is
+  organised, or when the same rule turns up in two files with different wording.
 ---
 
 # Agent Config Audit
@@ -17,16 +17,19 @@ From the current working directory, resolve the project's instruction-file
 stack — items 1, 3 and 4 are loaded by the harness; 2 and 5 are audited when
 present (all five resolved; scoping flags filter afterwards — see Flags):
 
-1. **Global CLAUDE.md** — `~/.claude/CLAUDE.md` (follow symlink to source)
-2. **Global preferences** — `~/.claude/preferences.md`, if present
-3. **Project AGENTS.md** — look for `AGENTS.md` in the project root (follow symlink to source)
-4. **Project CLAUDE.md** — look for `CLAUDE.md` in the project root (follow symlink chain fully)
-5. **Project preferences** — `.claude/preferences.md` in the project root, if
-   present
+1. **Global CLAUDE.md** — `~/.claude/CLAUDE.md`
+2. **Global preference/rule files** — whatever else `~/.claude/` loads
+   (`preferences.md`, `.claude/rules/*` — take what exists, don't assume names)
+3. **Project AGENTS.md** — `AGENTS.md` in the project root
+4. **Project CLAUDE.md** — `CLAUDE.md` in the project root
+5. **Project preference/rule files** — under the project's `.claude/`
+
+Any of these may be a symlink into a config repo — follow the chain to its
+source (`readlink -f`) so the audit edits the real file, not a link
 
 For each file found, report:
 - The logical path (e.g. `<project>/AGENTS.md`)
-- The resolved source path (e.g. `<config-repo>/workspace/<domain>/AGENTS.md`)
+- The resolved source path, where it differs (e.g. `<config-repo>/<domain>/AGENTS.md`)
 - Whether it is personal or team-owned. The rule: a file that resolves into
   the user's config repo or lives under `~/.claude/` is personal; a file
   tracked directly in the project repo is team-owned
@@ -86,11 +89,14 @@ Within each file, flag:
 - Rules that restate the language's or framework's official style-guide default with no project-specific deviation (e.g. "Classes: PascalCase" in Kotlin) — noise a competent reader already assumes
 - Procedural checklists whose steps the agent cannot perform. The test: a step is agent-actionable if it maps to a tool invocation or a file edit; flag steps that require physical action, a GUI-only tool, or credentials the agent does not hold
 
-### 2e — Structural health
+### 2e — Structural health (only where the setup uses a config repo)
+
+Skip this check entirely when Step 1 found no symlinks — plain files in place
+are a valid setup, not a finding. Where symlinks exist:
 
 - Check that each file's symlink chain resolves to a real file (no broken links)
-- Check that project preferences are symlinked to the config repo (not standalone copies that can drift)
-- Check that global preferences are symlinked to the config repo
+- Check that files meant to be centralised are symlinked, not standalone copies
+  that can drift from the config repo
 
 ## Step 3: Report
 

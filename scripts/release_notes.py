@@ -13,7 +13,6 @@ marketplace acts on: which plugins does `claude plugin update` now have work to 
 for. The commit list is the supporting detail, not the headline.
 """
 import argparse
-import json
 import re
 import subprocess
 import sys
@@ -39,24 +38,18 @@ def version_at(ref, plugin):
     return match.group(1) if match else None
 
 
-def current_version(plugin):
-    path = ROOT / "plugins" / plugin / ".claude-plugin" / "plugin.json"
-    try:
-        return json.loads(path.read_text()).get("version")
-    except (OSError, json.JSONDecodeError):
-        return None
+def plugins(ref):
+    """Plugin names at a ref — never the worktree, which may be any branch."""
+    out = git("ls-tree", "--name-only", ref, "plugins/")
+    return sorted(Path(line).name for line in out.splitlines() if line.strip())
 
 
-def plugins():
-    return sorted(p.name for p in (ROOT / "plugins").iterdir() if p.is_dir())
-
-
-def version_table(base_ref):
-    """Rows for plugins whose version moved between base_ref and the worktree."""
+def version_table(base_ref, head_ref):
+    """Rows for plugins whose version moved between base_ref and head_ref."""
     rows = []
-    for name in plugins():
+    for name in plugins(head_ref):
         was = version_at(base_ref, name) if base_ref else None
-        now = current_version(name)
+        now = version_at(head_ref, name)
         if now is None:
             continue
         if was is None:
@@ -87,9 +80,14 @@ def commits(rng):
 def merged_prs(rng):
     if not rng:
         return "(none)"
-    merges = git("log", rng, "--merges", "--format=%s")
-    found = re.findall(r"Merge pull request #(\d+) ", merges)
-    return " ".join(f"#{n}" for n in found) if found else "(none — direct commits only)"
+    # Two shapes: a merge commit's "Merge pull request #N from …", and the
+    # "Subject (#N)" suffix a squash or rebase merge leaves. This repo squashes
+    # feature PRs, so counting only merge commits hides most of the batch.
+    subjects = git("log", rng, "--format=%s")
+    found = re.findall(r"Merge pull request #(\d+) ", subjects)
+    found += re.findall(r"\(#(\d+)\)$", subjects, re.MULTILINE)
+    nums = sorted({int(n) for n in found})
+    return " ".join(f"#{n}" for n in nums) if nums else "(none — direct commits only)"
 
 
 def main():
@@ -106,7 +104,7 @@ def main():
         out = [
             "## What is being released",
             "",
-            *version_table(base),
+            *version_table(base, head),
             "",
             f"**Pull requests in this batch:** {merged_prs(rng)}",
             "",
@@ -129,7 +127,7 @@ def main():
         # No tag yet: the first release covers everything on the branch.
         rng = f"{tag}..HEAD" if tag else "HEAD"
         out = [
-            *version_table(tag),
+            *version_table(tag, "HEAD"),
             "",
             f"**Pull requests:** {merged_prs(rng)}",
             "",

@@ -51,10 +51,10 @@ trimmed to the delta, not dropped.
 
 Examples of legitimate Claude-only directives:
 - "`.claude/settings.json` cannot be auto-written from this repo"
-- "Evaluator non-determinism ±1–2 — don't claim a trend from a single run"
-- "When adding a domain, edit `config/domains.conf` only — never touch scripts"
-  (a Claude-behavior rule the human reader of README doesn't need)
-- "Never push to `main`; use the pre-installed hook + `bin/sync-back.sh`"
+- "The scoring harness is non-deterministic ±1–2 — don't claim a trend from a single run"
+- "When adding an entry, edit the registry file only — never touch the scripts
+  that read it" (a Claude-behavior rule the human reader of README doesn't need)
+- "Never push to `main`; use the pre-installed hook + the sync script"
 
 Examples of content that belongs **elsewhere**:
 - Build/test commands → README

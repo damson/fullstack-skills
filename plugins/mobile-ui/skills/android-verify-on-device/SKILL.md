@@ -6,8 +6,11 @@ description: >
   been opened, a class the project cannot construct under Robolectric. Fire when the
   user says "check it on the device", "does it actually work", "run it and look", or
   when a change lands in a class that reaches Play Services and so has no unit-test
-  seam. Skip when a screenshot golden or a Robolectric test can hold the same claim —
-  they are cheaper and they run in CI, which this never does.
+  seam. Fire also when a layout question has been answered twice from captures and the
+  answer keeps moving, or when what is on screen depends on something a test cannot
+  supply: a filled ad, a real inset, an orientation the manifest may lock away. Skip
+  when a screenshot golden or a Robolectric test can hold the same claim — they are
+  cheaper and they run in CI, which this never does.
 ---
 
 # Verify a change on a device
@@ -112,6 +115,25 @@ frame changed since the action.
    `adb shell cmd uimode night auto`, and any
    `cmd overlay enable com.android.internal.display.cutout.emulation.*`. Delete files
    pushed to `/sdcard`.
+
+## Before trusting a capture instead
+
+A golden is cheaper than this page and usually right, so the question is not which is
+better but what the capture cannot contain. Three things it cannot, each of which reads
+as a finished screen rather than a missing one:
+
+- **A view with nothing to show measures 0x0.** An unfilled ad, an image that has not
+  decoded. Stacked in a column nobody notices; beside one, the column collapses and takes
+  the panel's width with it. The capture is not wrong, it is of a different layout.
+- **A configuration the app cannot reach.** A landscape golden of an activity locked to
+  portrait reads exactly like one a user could see. Check the manifest before measuring
+  anything off an orientation.
+- **A preview that pins what the component would have decided.** Passing a parameter the
+  component defaults from the window means every capture shows one branch — usually the
+  branch the preview exists to disprove.
+
+When a capture has answered the same layout question twice and the answer keeps changing,
+stop reading captures. One run on a device settles it.
 
 ## Report only what you saw
 

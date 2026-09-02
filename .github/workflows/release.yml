@@ -66,10 +66,19 @@ jobs:
           # would publish a release containing none of the merged work, and that
           # fresh tag would then hold the real first release behind the three-day
           # gate in the propose job below.
+          #
+          # "Promoted" is answered by CONTENT, not ancestry. A release PR merged
+          # as a squash — one click on the wrong button — leaves develop a
+          # non-ancestor of main while the trees are byte-identical, and an
+          # ancestry-only guard then refuses to tag the very release it just
+          # watched merge. That happened on v2026.09.02. Identical trees mean
+          # promoted, whatever shape the merge took.
           git fetch origin develop --quiet
-          if [ -z "$last" ] && ! git merge-base --is-ancestor origin/develop HEAD; then
-            echo "No release yet and develop is ahead of main — main is a baseline,"
-            echo "not a release point. Leaving it untagged."
+          if [ -z "$last" ] \
+             && ! git merge-base --is-ancestor origin/develop HEAD \
+             && [ "$(git rev-parse 'HEAD^{tree}')" != "$(git rev-parse 'origin/develop^{tree}')" ]; then
+            echo "No release yet and develop carries content main does not —"
+            echo "main is a baseline, not a release point. Leaving it untagged."
             echo "skip=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -170,13 +179,16 @@ jobs:
           set -euo pipefail
           git fetch origin main develop --tags --force --quiet
 
-          ahead=$(git rev-list --count origin/main..origin/develop)
-          if [ "$ahead" -eq 0 ]; then
-            echo "develop is not ahead of main — nothing to release."
+          # Content, not commit count. After a squash-merged release plus its
+          # back-merge, develop is "ahead" by every commit the squash absorbed
+          # while carrying nothing new — a count gate would then propose an
+          # empty release, merge it, and tag a CalVer that shipped nothing.
+          if git diff --quiet origin/main origin/develop; then
+            echo "develop and main have identical content — nothing to release."
             echo "skip=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          echo "develop is $ahead commit(s) ahead of main."
+          echo "develop is $(git rev-list --count origin/main..origin/develop) commit(s) ahead of main."
 
           last=$(git tag --list 'v*' --sort=-creatordate | head -n 1)
           if [ -n "$last" ]; then

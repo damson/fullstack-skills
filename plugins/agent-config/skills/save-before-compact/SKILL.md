@@ -23,9 +23,10 @@ conditions.
 - Count substantive turns (ignore < 10-word acknowledgements: `thanks`, `ok`,
   `yes`, `nice`). If `< 15`, say so and skip straight to the resume brief (Step 8)
   — nothing worth persisting, but the pick-up note still gets written.
-- Detect context: is there a `CLAUDE.md` / `AGENTS.md` nearby? a domain registry
-  (`config/domains.conf`)? an eval harness (`just eval` / `evals/run-skill-eval.sh`)?
-  Record what's available — later steps branch on it.
+- Detect context: is there a `CLAUDE.md` / `AGENTS.md` nearby? a skill-structure
+  test suite or a config eval command, if the repo ships either (check its
+  README / justfile / package scripts — do not assume names)? Record what's
+  available — later steps branch on it.
 - Defer (one line, then stop) if a high-stakes op is in flight — scan the last
   ~5 turns for a deploy / merge / rebase / migration / incident command whose
   completion was never confirmed (confirmed = its success output is in the
@@ -69,9 +70,10 @@ applied/skipped ledger.
 ### Step 5 — Verify & score
 
 After applying:
-- **Structural**: if any skill file was touched, `bats tests/skills.bats`;
-  otherwise sanity-check the edited file still parses/renders.
-- **Score** the changed files with the repo's eval command if one exists,
+- **Structural**: if any skill file was touched, run the repo's skill-structure
+  tests (found in Step 1); otherwise sanity-check the edited file still
+  parses/renders.
+- **Score** the changed files with the repo's eval command if Step 1 found one,
   reading the **newest** result artifact it writes and checking its mtime —
   a stale artifact from a previous run reads exactly like a fresh score;
   otherwise an inline rubric, 1–5 per dimension — clarity (unambiguous on
