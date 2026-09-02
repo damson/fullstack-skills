@@ -119,8 +119,10 @@ PR=$(gh pr view --json number -q .number)
 SHA=$(git rev-parse --short HEAD)          # after the commit that contains the image
 ```
 
-**Pin to the SHA, never the branch.** A branch-pinned URL 404s forever once the branch
-is deleted on merge. Edit the PR body in place rather than replacing it:
+The URL shape — `github.com/<owner>/<repo>/raw/<sha>/<path>`, SHA-pinned, never
+`raw.githubusercontent.com`, never a branch name — is `github-pr-screenshot-embed`'s
+whole subject; follow that skill for the host rule and its private-repo rationale.
+Edit the PR body in place rather than replacing it:
 
 ```bash
 gh pr view "$PR" --json body -q .body > /tmp/pr-body.md

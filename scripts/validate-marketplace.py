@@ -83,6 +83,11 @@ def check_manifests():
             # The release job bumps the patch field; anything else it cannot parse.
             problem(f"plugins/{plugin.name}: version '{version}' is not MAJOR.MINOR.PATCH")
 
+        # Every plugin folder documents itself: the root README's theme table
+        # links here, and a marketplace browser lands here first.
+        if not (plugin / "README.md").is_file():
+            problem(f"plugins/{plugin.name}/ has no README.md")
+
     return listed
 
 
@@ -96,8 +101,10 @@ def check_readme():
     for plugin in plugin_dirs():
         skills = skills_of(plugin)
 
+        # The bold name may be plain (**name**) or a link to the plugin's
+        # README (**[name](plugins/name/README.md)**) — both count as the row.
         row = re.search(
-            rf"^\|\s*\*\*{re.escape(plugin.name)}\*\*\s*\|\s*(\d+)\s*\|",
+            rf"^\|\s*\*\*(?:\[{re.escape(plugin.name)}\]\([^)]+\)|{re.escape(plugin.name)})\*\*\s*\|\s*(\d+)\s*\|",
             readme,
             re.MULTILINE,
         )
