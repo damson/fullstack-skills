@@ -17,6 +17,33 @@ The deliverable is a role × capability matrix for the PR body.
 
 ## Procedure
 
+0. **Connect, then prove where you are.** Every `client` below is this one. The
+   connection string comes from the project's dev environment — a
+   `DEV_DATABASE_URL` in `.env`, the output of `supabase status`, the CI
+   workflow — never from a guess:
+
+   ```js
+   const pg = require('pg');
+   const url = process.env.DEV_DATABASE_URL;
+   if (!url) throw new Error('no dev connection string — stop');  // unset, pg
+   const client = new pg.Client(url);   // falls back to PG* env / localhost and
+   await client.connect();              // connects *somewhere* without saying so
+   ```
+
+   Before `begin`, ask the server what it is and compare against the dev target
+   you meant to reach — the host and database named by the same source the URL
+   came from:
+
+   ```sql
+   select current_database(), inet_server_addr(), inet_server_port();
+   ```
+
+   Match against what dev is *known* to be, not against a list of what
+   production might be: anything that is not the expected dev identity —
+   including an identity you cannot place — is the first STOP condition below,
+   now mechanically checkable instead of known out-of-band. Refuse before
+   `begin`, not after.
+
 1. **Name the invariant and record it before touching anything.** One count on
    the table the migration must *not* reach — `entries`, or whatever the change
    claims to leave alone. Step 6 re-reads it after the rollback; without the
@@ -54,9 +81,17 @@ The deliverable is a role × capability matrix for the PR body.
    below. Both die with the transaction.
 
    ```sql
+   -- Supabase variant: `authenticated`, `request.jwt.claim.sub` and
+   -- `auth.uid()` are Supabase's, not Postgres's.
    set local role authenticated;
    select set_config('request.jwt.claim.sub', '<uuid>', true);
    ```
+
+   On plain Postgres the rule is the same, only found instead of known: read
+   each policy's `qual` AND `with_check` from `pg_policies` — an `update` can
+   pass one and fail the other, and an `insert` answers only to `with_check` —
+   find the `roles` it applies to and the function or setting either expression
+   consults, and `set local` exactly those.
 
    Read the definition first rather than assuming which setting it consults —
    the wrong one silently yields an anonymous session that fails every check for
@@ -175,6 +210,8 @@ failure.
 ## When to STOP
 
 - **The only reachable database is production.** Transactional or not, do not.
+  Step 0's `current_database()` / `inet_server_addr()` check is how you find
+  out — this is never a fact to assume.
 - **The migration is destructive** (`drop`, `truncate`, a narrowing type
   change). Rolling back your probe does not make the migration safe; that needs
   the repo's destructive-op review.

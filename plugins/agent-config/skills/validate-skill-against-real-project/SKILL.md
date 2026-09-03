@@ -125,6 +125,13 @@ gh issue create --repo <owner>/<repo> --title "skill: <name> — <what breaks>" 
   --body-file <file>
 ```
 
+`gh` assumes GitHub — check `git remote get-url origin` first and use the
+forge's CLI (`gh` for GitHub, `glab issue create` for GitLab), confirmed
+before use: `command -v gh && gh auth status` (or the `glab` pair). No remote,
+an unrecognised host, a missing CLI or a failed auth check all take the same
+exit: write the report to `skill-validation-<name>.md` beside the skill and
+tell the user where it is — the report, not the issue, is the deliverable.
+
 Title it `skill: <name> — <what breaks>` so several reports stay sortable. For each
 defect give, in order: the quoted line from the skill, the command you ran, its exit
 code and output, then what it costs someone following it.

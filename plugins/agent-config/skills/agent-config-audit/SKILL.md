@@ -18,8 +18,10 @@ stack — items 1, 3 and 4 are loaded by the harness; 2 and 5 are audited when
 present (all five resolved; scoping flags filter afterwards — see Flags):
 
 1. **Global CLAUDE.md** — `~/.claude/CLAUDE.md`
-2. **Global preference/rule files** — whatever else `~/.claude/` loads
-   (`preferences.md`, `.claude/rules/*` — take what exists, don't assume names)
+2. **Global preference/rule files** — whatever else `~/.claude/` loads.
+   Enumerate, don't assume names:
+   `ls ~/.claude/*.md ~/.claude/rules/*.md 2>/dev/null`, minus the
+   `CLAUDE.md` item 1 already covers — take what exists
 3. **Project AGENTS.md** — `AGENTS.md` in the project root
 4. **Project CLAUDE.md** — `CLAUDE.md` in the project root
 5. **Project preference/rule files** — under the project's `.claude/`
@@ -96,7 +98,14 @@ are a valid setup, not a finding. Where symlinks exist:
 
 - Check that each file's symlink chain resolves to a real file (no broken links)
 - Check that files meant to be centralised are symlinked, not standalone copies
-  that can drift from the config repo
+  that can drift from the config repo. The test for "meant to be centralised":
+  a plain file is a drift candidate only when a counterpart already resolves
+  into the config repo — a sibling file in the same directory, or the same
+  logical file (`CLAUDE.md`, `AGENTS.md`) in another project the repo manages,
+  where "manages" is read from the config repo itself: the projects its
+  registry or its existing symlink targets already name, never guessed by
+  scanning the filesystem. A plain file with no such counterpart is a valid
+  setup, not a finding
 
 ## Step 3: Report
 

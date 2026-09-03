@@ -3,7 +3,7 @@
 Reads what a third-party library actually does out of the artifact that runs,
 instead of trusting its name. A field name, a README and a plausible default are
 all claims; the bytecode is what executes, and where they disagree the
-disagreement is silent — a "fix" that changes nothing, or a number wrong by a
+disagreement is silent: a "fix" that changes nothing, or a number wrong by a
 factor of a hundred.
 
 Read [SKILL.md](SKILL.md) for the procedure. This file is when to reach for it
@@ -21,7 +21,7 @@ behaves and cannot point at evidence:
   which branch a task takes
 
 It deliberately does **not** fire when the behaviour can simply be run and
-observed — running is cheaper and exercises the real path. And it stops the
+observed: running is cheaper and exercises the real path. And it stops the
 moment a version-matched sources jar (or the tagged source for that exact
 version) exists: bytecode is the fallback, not the goal.
 
@@ -40,16 +40,16 @@ javap -p -c '<pkg>/<Class>.class'
 Defaults live in `static {}` / `<clinit>`, as the constant pushed before the
 constructor call; Kotlin default arguments hide in the `$default` synthetic
 bridge, not the signature. The report quotes what was found, not a verdict:
-`ThresholdValidator(0F)` at `<clinit>` is a fact someone else can check — "the
+`ThresholdValidator(0F)` at `<clinit>` is a fact someone else can check; "the
 default is strict" is only an assertion.
 
 Two traps the procedure guards on the way: decompile the version this build
 actually resolves (`./gradlew :app:dependencies` settles it, not the newest jar
-in the cache), and beware the no-op that reads like a tightening — setting an
+in the cache), and beware the no-op that reads like a tightening: setting an
 option to its existing default advertises a guarantee nobody added.
 
 ## Related
 
-- `prove-the-check-can-fail` — the complement: that skill asks whether your
+- `prove-the-check-can-fail`, the complement: that skill asks whether your
   check would catch the bug, this one asks whether the library does what its
   name implies.

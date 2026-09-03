@@ -21,6 +21,13 @@ directives below are agent-only.
 
 - Feature branches cut from `origin/develop`; feature PRs squash-merge into
   `develop`.
+- Merge a PR only after its CodeRabbit review is posted and answered, one row
+  per finding. It auto-reviews PRs targeting `develop` (`.coderabbit.yaml`,
+  read from the PR's **head** branch); `@coderabbitai review` triggers one
+  manually. When its rate limit blocks a review, substitute an independent
+  agent review on a cheap model (haiku), post that agent's findings as a PR
+  comment, and answer them under the same gate — the review must still be
+  independent of whoever wrote the diff.
 - The release PR (`develop → main`) merges with a **merge commit, never a
   squash** — why, and what a squash costs: `docs/releases.md`.
 

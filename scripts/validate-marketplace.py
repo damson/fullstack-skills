@@ -98,6 +98,29 @@ def check_readme():
     """
     readme = (ROOT / "README.md").read_text()
 
+    # The welcome line's aggregate ("N skills in M themed plugins") drifts
+    # exactly like the table rows do, and drifted to 29-vs-31 before this
+    # assertion existed.
+    total = sum(len(skills_of(p)) for p in plugin_dirs())
+    welcome = re.search(
+        r"^👋 \*\*Welcome!\*\*.*\*\*(\d+) skills in (\d+) themed plugins\*\*",
+        readme,
+        re.MULTILINE,
+    )
+    if not welcome:
+        problem("README.md: no welcome line stating the skill and plugin totals")
+    else:
+        if int(welcome.group(1)) != total:
+            problem(
+                f"README.md: welcome line says {welcome.group(1)} skills, "
+                f"the tree has {total}"
+            )
+        if int(welcome.group(2)) != len(plugin_dirs()):
+            problem(
+                f"README.md: welcome line says {welcome.group(2)} plugins, "
+                f"the tree has {len(plugin_dirs())}"
+            )
+
     for plugin in plugin_dirs():
         skills = skills_of(plugin)
 

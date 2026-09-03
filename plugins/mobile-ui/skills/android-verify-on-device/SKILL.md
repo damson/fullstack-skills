@@ -26,8 +26,8 @@ frame changed since the action.
 
 ## Procedure
 
-1. **Install the build you mean to test.** `./gradlew :app:installDebug` after the
-   change compiles. Where the state under test is stored, `adb uninstall` first —
+1. **Install the build you mean to test.** `./gradlew :<module>:installDebug` —
+   the app module under test, not necessarily `:app` — after the change compiles. Where the state under test is stored, `adb uninstall` first —
    a preference left by an earlier run is the most common false result.
 
 2. **Launch and wait for a real frame**, not for the command to return:
@@ -110,6 +110,13 @@ frame changed since the action.
    ```bash
    adb shell run-as <pkg> cat /data/data/<pkg>/shared_prefs/<name>.xml
    ```
+
+   `run-as` works only on a debuggable build. "package not debuggable" means the
+   build, not the state: reinstall the debug variant (step 1) and re-drive — or,
+   where reinstalling would wipe the very state under test, fall back to reading
+   the outcome off a confirmed frame (steps 3–6). A frame proves the rendered
+   state, not that it was persisted: when the claim is survival, force-stop and
+   relaunch (no data clear) before reading the frame.
 
 8. **Restore what you changed.** Emulator-wide settings outlive the run:
    `adb shell cmd uimode night auto`, and any

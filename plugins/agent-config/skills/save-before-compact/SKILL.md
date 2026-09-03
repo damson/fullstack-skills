@@ -70,9 +70,12 @@ applied/skipped ledger.
 ### Step 5 — Verify & score
 
 After applying:
-- **Structural**: if any skill file was touched, run the repo's skill-structure
-  tests (found in Step 1); otherwise sanity-check the edited file still
-  parses/renders.
+- **Structural**: if any skill file was touched and Step 1 found a
+  skill-structure suite, run it; otherwise — no suite, or no skill file
+  touched — re-Read each edited file and check two
+  things — the applied line matches the approved diff exactly, and any YAML
+  frontmatter still parses (a stray `:` or unclosed quote silently breaks the
+  whole file's load).
 - **Score** the changed files with the repo's eval command if Step 1 found one,
   reading the **newest** result artifact it writes and checking its mtime —
   a stale artifact from a previous run reads exactly like a fresh score;

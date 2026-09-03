@@ -10,7 +10,7 @@ how to reach it.
 
 ## Using it
 
-Ask for it in any of these shapes — the skill fires on the intent, not on a
+Ask for it in any of these shapes; the skill fires on the intent, not on a
 command:
 
 - "post coverage on the PR"
@@ -18,7 +18,7 @@ command:
 - "show the coverage delta against the base branch"
 - "add a red-amber-green threshold to the coverage comment"
 
-It is stack-agnostic. Only the first step differs between projects — reading the
+It is stack-agnostic. Only the first step differs between projects: reading the
 totals out of a JaCoCo XML, an Istanbul `coverage-summary.json`, a Cobertura
 file, a `go tool cover` run, `.last_run.json` or an `lcov.info`. Everything after
 that is identical, because the skill normalises to `{metric: (pct, covered,
@@ -37,7 +37,7 @@ THRESHOLDS = {          # branch coverage runs below line coverage in every
 
 ## What it looks like
 
-The comment on a pull request, after two pushes — still one comment, edited in
+The comment on a pull request, after two pushes, still one comment, edited in
 place:
 
 > ## Coverage: 47.3% of lines (▲ +6.1 vs main)
@@ -56,7 +56,7 @@ place:
 > <sub>🟦 covered on main &nbsp; 🟩 added here &nbsp; 🟥 removed here &nbsp; ⬜ uncovered</sub>
 > <sub>🔴 below floor · 🟡 below target · 🟢 at target — line 40/60, branch 25/45</sub>
 
-That is the live markdown, not a screenshot — GitHub renders it here exactly as
+That is the live markdown, not a screenshot: GitHub renders it here exactly as
 it renders in the comment, so this preview cannot drift from the format the skill
 produces. The same body was posted to a real pull request while writing this, and
 posted a second time, to confirm the upsert edits one comment instead of adding a
@@ -85,11 +85,11 @@ Source, for copying:
 
 Reading it: eight blue blocks of coverage `main` already had, one green block
 this branch added, eleven still uncovered. Line coverage rose 6.1 points and is
-amber — clear of its 40% floor, short of its 60% target. Branch coverage fell
+amber: clear of its 40% floor, short of its 60% target. Branch coverage fell
 0.7 and crossed **below** its floor, which is the row that should stop the merge.
 
 Each block is 5 points at width 20, so a sub-5-point move shows as a colour that
-does not change — the delta and the table carry that, which is why the comment
+does not change; the delta and the table carry that, which is why the comment
 has all three.
 
 ## Why it is shaped like this
@@ -99,13 +99,13 @@ has all three.
   survives inside a table cell.
 - **A delta, not just a number.** `47.3%` answers nothing. `▲ +1.2 vs main` does.
 - **`1841/3890`, not just `47.3%`.** A percentage alone hides a codebase that
-  shrank — delete an untested module and coverage "improves".
+  shrank: delete an untested module and coverage "improves".
 - **A status column that can fail the build.** The skill's step 5 insists the
   floor either fails a step or is labelled advisory. A colour that can never stop
   anything trains reviewers to skip the comment.
 
 ## Related
 
-- `pr-comment-loop` — replying to review findings, one row per finding.
-- `github-pr-screenshot-embed` — the host rule for images that render for
+- `pr-comment-loop`: replying to review findings, one row per finding.
+- `github-pr-screenshot-embed`: the host rule for images that render for
   reviewers on a private repo.

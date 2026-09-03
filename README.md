@@ -8,15 +8,16 @@ you don't have to win them the hard way too.*
 [![CI](https://github.com/damson/hard-won-skills/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/damson/hard-won-skills/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/damson/hard-won-skills?label=release&color=blue)](https://github.com/damson/hard-won-skills/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Coverage](https://codecov.io/gh/damson/hard-won-skills/graph/badge.svg)](https://codecov.io/gh/damson/hard-won-skills)
 [![Made for Claude Code](https://img.shields.io/badge/made%20for-Claude%20Code-d97757.svg)](https://claude.com/claude-code)
 
-👋 **Welcome!** This is a marketplace of **29 skills in 5 themed plugins** —
+👋 **Welcome!** This is a marketplace of **31 skills in 5 themed plugins**:
 small, careful procedures your agent picks up automatically when a task calls
 for them: rebasing a stack of PRs without losing one, proving a screenshot test
 actually compared pixels, probing a migration without leaving a trace.
 
 What holds them together is where they came from. **Every skill here was
-extracted from a real session where not having it cost something** — a check
+extracted from a real session where not having it cost something**: a check
 that could never fail, a release that could not tag itself, forty-seven stale
 branches nobody could see. The measured facts stayed in the text, and so did
 the scars: each skill knows not just what to do, but when to stop and ask.
@@ -47,10 +48,10 @@ just the plugins whose version moved.
 
 **Then… do nothing.** You don't invoke a skill so much as walk into it: each
 one declares the situations and phrases it fires on, and the agent picks it up
-when your task matches — "rebase the open PRs", "do the baselines still pass",
+when your task matches: "rebase the open PRs", "do the baselines still pass",
 a push to a branch with an open PR. Curious what you just installed? Every
 skill has a README beside its procedure with its triggers and a worked
-example — start with any link below.
+example; start with any link below.
 
 ## 🗂 Pick your themes
 
@@ -75,8 +76,8 @@ renders for reviewers on a private repo, report coverage as one sticky comment
 with a threshold band rather than a fresh number every push, check a diagram
 still matches the system before ticking "architecture updated", move a
 vendored pin only with the evidence that earned the new commit, and wire a
-scheduled workflow so its cron actually fires — GitHub registers schedule
-triggers only from the default branch. Two more from one long launch session:
+scheduled workflow so its cron actually fires (GitHub registers schedule
+triggers only from the default branch). Two more from one long launch session:
 wait out a PR's checks at a pinned SHA where an empty conclusion counts as
 pending, and land a batch of independent fixes as file-disjoint PRs built by
 parallel agents whose scope fences hold.
@@ -152,12 +153,12 @@ trusting a stale frame or a tap that missed.
 
 Every skill is two files:
 
-- **`SKILL.md`** — the procedure the agent follows: frontmatter whose `name`
+- **`SKILL.md`**, the procedure the agent follows: frontmatter whose `name`
   matches its folder, a `## Procedure`, and a **`## When to STOP`** section.
   That last one is the part most skill collections leave out, and it is what
-  stops a skill firing on a task it should decline — the difference between a
+  stops a skill firing on a task it should decline: the difference between a
   procedure and a hazard.
-- **`README.md`** — the half written for you: what the skill produces, the
+- **`README.md`**, the half written for you: what the skill produces, the
   phrases that reach it, a worked example, and the sibling skills it hands
   off to.
 
@@ -167,14 +168,14 @@ may not have, it says so and degrades instead of failing.
 
 ## 🤝 Contributing
 
-Found a rough edge? That's exactly the kind of thing this repo is made of — a
+Found a rough edge? That's exactly the kind of thing this repo is made of: a
 skill that stopped matching its tool's current behaviour is a bug worth
 reporting even without a fix, and small contributions count: a clearer worked
 example, a sharper trigger, a STOP case you hit in the wild. The bar for a
-new skill is the lineage above — it encodes something that actually went wrong
+new skill is the lineage above: it encodes something that actually went wrong
 and would go wrong again.
 
-**[CONTRIBUTING.md](CONTRIBUTING.md) is the complete guide** — ways to
+**[CONTRIBUTING.md](CONTRIBUTING.md) is the complete guide**: ways to
 contribute, what a skill ships as, the two validators to run before pushing,
 and the conventions they cannot see.
 
@@ -182,14 +183,14 @@ and the conventions they cannot see.
 
 `develop` integrates, `main` is what `claude plugin marketplace add` installs.
 A workflow promotes one to the other every three days, but only when there is
-something to promote and the CI suite passes — plugins that changed get a patch
+something to promote and the CI suite passes: plugins that changed get a patch
 bump, the marketplace gets a CalVer tag. Gates, couplings and how to hold a
 release: [docs/releases.md](docs/releases.md).
 
 ## 🔗 Related
 
-The engine these were extracted from — a domain registry, an LLM rubric that
-scores config quality, and a `bats` suite that enforces skill structure — lives
+The engine these were extracted from (a domain registry, an LLM rubric that
+scores config quality, and a `bats` suite that enforces skill structure) lives
 separately in `agent-config-harness`.
 
 [MIT licensed](LICENSE). Use them, fork them, make them yours.
