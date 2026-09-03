@@ -92,13 +92,10 @@ remembers to resume.
 ## The tests, and where they came from
 
 `scripts/validate-skills.sh` is vendored from `agent-config-harness`, at the
-commit named in its header. It is a copy rather than a submodule because that
-repo is private and this one is headed for public: fork pull requests receive no
-secrets, so a private submodule would mean no outside contributor could ever get
-a green check.
-
-When `agent-config-harness` is public, migrating back is one line in `ci.yml`
-and deleting the vendored copy. Until then, `diff` the two files when the
+commit named in its header. It began as a copy because the harness was private
+then; it stays one now that the harness is public because the copy is what
+keeps contribution self-contained: the exact check CI runs sits in the repo,
+runnable with zero extra clones and no network. `diff` the two files when the
 harness moves.
 
 `scripts/validate-marketplace.py` has no upstream. It checks the wiring the
