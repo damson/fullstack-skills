@@ -7,6 +7,8 @@ tree the test suite points the validator at.
 |---|---|---|
 | **alpha** | 2 | Exercising the validator |
 
+## Plugins
+
 ### alpha
 
 Two placeholder skills: `skill-one` and `skill-two`.
