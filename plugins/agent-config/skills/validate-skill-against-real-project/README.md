@@ -38,7 +38,8 @@ project":
    branch for "nothing found" is a defect even when its happy path works.
 6. Report one issue per skill in the owning repo, titled
    `skill: <name> — <what breaks>`, quoting the skill's line, the command run,
-   its exit code and output, and what it costs someone following it.
+   its exit code and output, and what it costs someone following it — via the
+   forge's own CLI, or a local report file when no forge CLI is available.
 
 One boundary it draws explicitly: having read the skill, you can judge whether
 its commands run — you can no longer judge whether it would have *fired*
