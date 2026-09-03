@@ -60,8 +60,9 @@ reachable via `refs/pull/<n>/head` indefinitely, so a SHA-pinned embed survives.
 Two checks are runnable without a second account:
 
 ```bash
+n=$(gh pr view --json number -q .number)     # from the PR branch
 git cat-file -e <sha>:<path-to-image>        # the blob exists at the pinned SHA
-gh pr view <n> --json body -q .body | grep -c raw.githubusercontent.com   # must be 0
+gh pr view "$n" --json body -q .body | grep -c raw.githubusercontent.com   # must be 0
 ```
 
 If a reviewer still reports a broken image after both pass, ask them for the

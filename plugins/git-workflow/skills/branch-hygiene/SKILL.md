@@ -97,7 +97,14 @@ helping.
    ```bash
    n=$(gh pr view <child> --json commits -q '.commits | length')
    parent_tip=$(git -C "$wt" rev-parse "<branch>~$n")
+   git -C "$wt" log --oneline "$parent_tip..<branch>"   # exactly the child's own commits?
    ```
+
+   The count equals commits-since-fork only while the child's history is
+   untouched — an amend or an earlier base retarget breaks it silently. If that
+   log shows anything that is not the child's own work (or misses some of it),
+   `$parent_tip` is the wrong SHA: STOP and read the fork point off
+   `git log --oneline <branch>` instead.
 
    Then pick the form by asking **git**, not the API — see the first sharp edge
    for why the API cannot answer this:

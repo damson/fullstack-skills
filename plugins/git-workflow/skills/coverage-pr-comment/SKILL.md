@@ -54,7 +54,23 @@ while nothing was tested.
 
 The delta is the part reviewers read. Get the base branch's figure from a stored
 artifact published by the base branch's own runs — rebuilding coverage for the
-merge target doubles every PR's CI time.
+merge target doubles every PR's CI time. Concretely: the base branch's push
+workflow uploads the normalised totals (`actions/upload-artifact` with a fixed
+name, say `coverage-baseline`, holding the totals JSON); the PR job pulls the
+newest one:
+
+```bash
+run=$(gh run list -b "$BASE" -w "$WORKFLOW" -s success -L 1 \
+        --json databaseId -q '.[0].databaseId')
+if [ -n "$run" ] && gh run download "$run" -n coverage-baseline -D baseline/; then
+  :   # baseline in baseline/
+else
+  echo "no baseline for $BASE — reporting absolute figures only"
+fi
+```
+
+An empty `$run` or a failed download is the missing-baseline case below — the
+`if` keeps either from killing a fail-fast CI step; fall through, never fail.
 
 **A missing baseline is not an error.** First run, a new base branch, an expired
 artifact: degrade to absolute figures and say so. Never fail the job, and never
@@ -169,7 +185,10 @@ A status column that can never fail anything is decoration, and a decorative
 column teaches reviewers to skip the whole comment. Pick one and be explicit:
 
 - **Gate it.** The same floor that colours the row also fails a step. Read both
-  from one place, so the comment cannot say 🔴 while the build says green.
+  from one place, so the comment cannot say 🔴 while the build says green — in
+  practice: the thresholds live in one file (say `coverage-thresholds.json`),
+  and the render script that reads it for the band also exits non-zero when a
+  gated metric sits below its floor, so the CI step fails from that same read.
 - **Or label it advisory** in the legend, and say what will act on it instead.
 
 Set the floor at or just below **current** coverage and raise it as coverage

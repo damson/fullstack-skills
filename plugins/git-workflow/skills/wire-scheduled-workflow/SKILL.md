@@ -33,13 +33,29 @@ it reaches the default branch.
    gh workflow run <file>.yml      # a 404 here IS the diagnosis
    ```
 
-3. **Trace the path to the default branch.** In a gitflow repo that is the next
-   release. Two traps on the way:
+3. **Trace the path to the default branch.** Establish both ends first:
+
+   ```bash
+   def=$(gh repo view --json defaultBranchRef -q .defaultBranchRef.name)
+   git fetch origin "+refs/heads/$def:refs/remotes/origin/$def"  # a stale or
+   # single-branch clone otherwise answers from a tree that isn't there
+   git ls-tree "origin/$def" -- .github/workflows/<file>.yml   # empty = not there yet
+   ```
+
+   A failed fetch stops the trace — the emptiness of `ls-tree` means nothing
+   against a ref you could not refresh.
+
+   Empty output means the file has not reached the default branch; in a gitflow
+   repo the path there is the next release. Two traps on the way:
 
    - **The workflow gates its own promotion.** A release workflow that lives
      only on `develop` cannot run to promote itself to `main` — putting it
-     there *is* a release. The first promotion must be done by hand: replicate
-     what the workflow's proposal step would have done, open the PR, merge it.
+     there *is* a release. The first promotion must be done by hand: read the
+     workflow's job steps and replicate only the ones that run *before* the
+     merge — the proposal content (version bump, changelog, PR body) — then
+     open the PR and merge it. Anything the workflow does *after* its merge —
+     the tag, a publish, a back-merge — happens from the **merged** SHA, never
+     before: a tag cut pre-merge points at a commit a squash merge discards.
      Every run after that is automatic.
    - **A long-lived PR is not a path.** The workflow registers when the file
      lands on the default branch, not when the PR opens.

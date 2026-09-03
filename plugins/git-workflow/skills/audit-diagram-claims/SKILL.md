@@ -71,7 +71,8 @@ Ask what each box *asserts*, and what the map does not mention at all.
    node repo:
 
    ```bash
-   npm install mermaid jsdom
+   npm install --no-save --no-package-lock mermaid jsdom   # an audit, not a
+   # dependency: --no-save spares package.json, --no-package-lock the lockfile
    node --input-type=module -e '
      import fs from "node:fs"; import { JSDOM } from "jsdom";
      const d = new JSDOM("<!doctype html><body>");
@@ -90,6 +91,8 @@ Ask what each box *asserts*, and what the map does not mention at all.
 
    Then break it on purpose and confirm exit 1: `flowchart TB` → `flowchart ZZ`.
    Not every mutation works — see the first sharp edge before picking another.
+   Any `package.json` / lockfile diff the install left behind is a side effect
+   of the audit, not part of the change — never commit it.
 
 6. **Report the claims you verified**, not "diagram updated". "Checked cadence,
    count and the two guarantees; added the missing discovery node" is auditable.
@@ -123,5 +126,7 @@ Ask what each box *asserts*, and what the map does not mention at all.
   than performing an audit to justify a checkbox.
 - **The diagram belongs to another team** — report the stale claim, do not edit
   their file.
-- **The rot is large.** If more than a handful of claims are false, the map
-  needs its own PR; fixing it inside an unrelated change buries both.
+- **The rot is large.** More than 3 false claims in step 1's inventory, or any
+  false claim about files or systems the PR's changed paths never touch, means
+  the map needs its own PR; fixing it inside an unrelated change buries both.
+  Hand the out-of-scope ones over as a list in the PR body, not as edits.
