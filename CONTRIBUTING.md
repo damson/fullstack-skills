@@ -62,7 +62,7 @@ Run the same two checks CI runs — no token, no network:
 
 ```bash
 ./scripts/validate-skills.sh              # structure of every skill
-python3 scripts/validate-marketplace.py   # manifests, README and plugin pages vs the tree
+python3 scripts/validate-marketplace.py   # manifests, README, plugin pages and relative links vs the tree
 ```
 
 Then the conventions the validators cannot see:
