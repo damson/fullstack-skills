@@ -54,7 +54,7 @@ example — start with any link below.
 
 | Plugin | Skills | What it is for |
 |---|---|---|
-| **[git-workflow](plugins/git-workflow/README.md)** | 10 | Branch, worktree and pull-request hygiene |
+| **[git-workflow](plugins/git-workflow/README.md)** | 12 | Branch, worktree and pull-request hygiene |
 | **[agent-config](plugins/agent-config/README.md)** | 8 | Writing and auditing agent instruction files |
 | **[verification](plugins/verification/README.md)** | 2 | Proving a check can fail before trusting it |
 | **[data-safety](plugins/data-safety/README.md)** | 5 | Writes that are hard to undo |
@@ -74,7 +74,10 @@ with a threshold band rather than a fresh number every push, check a diagram
 still matches the system before ticking "architecture updated", move a
 vendored pin only with the evidence that earned the new commit, and wire a
 scheduled workflow so its cron actually fires — GitHub registers schedule
-triggers only from the default branch.
+triggers only from the default branch. Two more from one long launch session:
+wait out a PR's checks at a pinned SHA where an empty conclusion counts as
+pending, and land a batch of independent fixes as file-disjoint PRs built by
+parallel agents whose scope fences hold.
 
 [`branch-hygiene`](plugins/git-workflow/skills/branch-hygiene/README.md) ·
 [`pr-comment-loop`](plugins/git-workflow/skills/pr-comment-loop/README.md) ·
@@ -84,6 +87,8 @@ triggers only from the default branch.
 [`github-pr-screenshot-embed`](plugins/git-workflow/skills/github-pr-screenshot-embed/README.md) ·
 [`audit-diagram-claims`](plugins/git-workflow/skills/audit-diagram-claims/README.md) ·
 [`coverage-pr-comment`](plugins/git-workflow/skills/coverage-pr-comment/README.md) ·
+[`await-pr-checks`](plugins/git-workflow/skills/await-pr-checks/README.md) ·
+[`parallel-pr-fanout`](plugins/git-workflow/skills/parallel-pr-fanout/README.md) ·
 [`bump-vendored-pin`](plugins/git-workflow/skills/bump-vendored-pin/README.md) ·
 [`wire-scheduled-workflow`](plugins/git-workflow/skills/wire-scheduled-workflow/README.md)
 
