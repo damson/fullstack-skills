@@ -1,5 +1,7 @@
 # hard-won-skills
 
+![Terminal-styled banner: a claude session announcing the hard-won-skills marketplace, over the tagline "Hard-won habits for Claude Code"](docs/assets/social-preview.png)
+
 *Hard-won habits for [Claude Code](https://claude.com/claude-code), packaged so
 you don't have to win them the hard way too.*
 
@@ -8,7 +10,7 @@ you don't have to win them the hard way too.*
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Made for Claude Code](https://img.shields.io/badge/made%20for-Claude%20Code-d97757.svg)](https://claude.com/claude-code)
 
-👋 **Welcome!** This is a marketplace of **28 skills in 5 themed plugins** —
+👋 **Welcome!** This is a marketplace of **29 skills in 5 themed plugins** —
 small, careful procedures your agent picks up automatically when a task calls
 for them: rebasing a stack of PRs without losing one, proving a screenshot test
 actually compared pixels, probing a migration without leaving a trace.
@@ -54,10 +56,10 @@ example — start with any link below.
 
 | Plugin | Skills | What it is for |
 |---|---|---|
-| **[git-workflow](plugins/git-workflow/README.md)** | 10 | Branch, worktree and pull-request hygiene |
+| **[git-workflow](plugins/git-workflow/README.md)** | 12 | Branch, worktree and pull-request hygiene |
 | **[agent-config](plugins/agent-config/README.md)** | 8 | Writing and auditing agent instruction files |
 | **[verification](plugins/verification/README.md)** | 2 | Proving a check can fail before trusting it |
-| **[data-safety](plugins/data-safety/README.md)** | 4 | Writes that are hard to undo |
+| **[data-safety](plugins/data-safety/README.md)** | 5 | Writes that are hard to undo |
 | **[mobile-ui](plugins/mobile-ui/README.md)** | 4 | Android / Compose screenshots, Figma components, on-device checks |
 
 Not sure where to begin? **[verification](#verification)** is two skills,
@@ -74,7 +76,10 @@ with a threshold band rather than a fresh number every push, check a diagram
 still matches the system before ticking "architecture updated", move a
 vendored pin only with the evidence that earned the new commit, and wire a
 scheduled workflow so its cron actually fires — GitHub registers schedule
-triggers only from the default branch.
+triggers only from the default branch. Two more from one long launch session:
+wait out a PR's checks at a pinned SHA where an empty conclusion counts as
+pending, and land a batch of independent fixes as file-disjoint PRs built by
+parallel agents whose scope fences hold.
 
 [`branch-hygiene`](plugins/git-workflow/skills/branch-hygiene/README.md) ·
 [`pr-comment-loop`](plugins/git-workflow/skills/pr-comment-loop/README.md) ·
@@ -84,6 +89,8 @@ triggers only from the default branch.
 [`github-pr-screenshot-embed`](plugins/git-workflow/skills/github-pr-screenshot-embed/README.md) ·
 [`audit-diagram-claims`](plugins/git-workflow/skills/audit-diagram-claims/README.md) ·
 [`coverage-pr-comment`](plugins/git-workflow/skills/coverage-pr-comment/README.md) ·
+[`await-pr-checks`](plugins/git-workflow/skills/await-pr-checks/README.md) ·
+[`parallel-pr-fanout`](plugins/git-workflow/skills/parallel-pr-fanout/README.md) ·
 [`bump-vendored-pin`](plugins/git-workflow/skills/bump-vendored-pin/README.md) ·
 [`wire-scheduled-workflow`](plugins/git-workflow/skills/wire-scheduled-workflow/README.md)
 
@@ -116,11 +123,14 @@ asserting what its naming implies.
 ### data-safety
 
 Probe a migration inside a transaction and roll it back, interrogating it as
-each role that will meet it. Make a bulk write reversible before running it.
+each role that will meet it. Answer data questions with a throwaway read-only
+probe instead of a remembered number. Make a bulk write reversible before
+running it.
 Catch the Supabase-managed-schema traps that pass review and fail in production.
 Sweep a repository's full history and its remote before anything goes public.
 
 [`probe-migration-in-transaction`](plugins/data-safety/skills/probe-migration-in-transaction/README.md) ·
+[`read-only-db-probe`](plugins/data-safety/skills/read-only-db-probe/README.md) ·
 [`reversible-bulk-write`](plugins/data-safety/skills/reversible-bulk-write/README.md) ·
 [`supabase-ci-migration-guards`](plugins/data-safety/skills/supabase-ci-migration-guards/README.md) ·
 [`pre-publication-sweep`](plugins/data-safety/skills/pre-publication-sweep/README.md)

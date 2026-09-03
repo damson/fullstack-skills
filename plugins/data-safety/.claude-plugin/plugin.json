@@ -1,6 +1,6 @@
 {
   "name": "data-safety",
-  "version": "0.2.3",
+  "version": "0.3.1",
   "description": "Guardrails for writes that are hard to undo. Probe a migration inside a transaction and roll it back, make a bulk write reversible before running it, catch the Supabase-managed-schema traps that pass review and fail in production, and sweep a repository's history and remote before anything goes public.",
   "author": {
     "name": "Damien Dagnet"
