@@ -28,7 +28,10 @@ docs a reader already has loaded and reports what is genuinely net-new.
 2. **Grep for each rule's subject** across the files a reader might already have
    loaded: sibling pages in the same directory, the repo's `CLAUDE.md` /
    `AGENTS.md`, the PR template, `CONTRIBUTING.md`. Search the *subject*, not
-   your phrasing — you will have reworded it.
+   your phrasing — you will have reworded it. Derive the subject mechanically:
+   take the 1–2 rarest content nouns in the rule (command names, file names,
+   flag names, feature nouns) and OR them. "Start from the PR template, never
+   free-hand" → `template|free.?hand`, not `always start from`.
 
    ```bash
    grep -rniE '<subject>' --include='*.md' . | grep -v node_modules
@@ -52,8 +55,17 @@ docs a reader already has loaded and reports what is genuinely net-new.
    hardcoded repo names, org names, bot accounts, CLI tools, or stack-specific
    paths — those contradict the claim and are the most common portability leak.
 
-6. **Report** before committing: rules added / already stated elsewhere / net
-   new, plus the file's line delta. If net new is zero, the diff is churn.
+6. **Report** before committing, filling this template verbatim:
+
+   ```
+   Rules added: N
+   Already stated elsewhere: N
+     - "<rule>" → <file>:<section> (drop / keep there / link instead)
+   Net new: N
+   File delta after pruning: +N lines instead of +M
+   ```
+
+   If net new is zero, the diff is churn.
 
 ## Interpreting the result
 

@@ -69,7 +69,7 @@ When the user asks for an end-of-session or multi-prompt review:
 3. Compute the **average per D**, and a **session total** over the dimensions that actually scored (X / 4×`<scored Ds>` — a session where a D was always N/A totals out of 15, not 20). Trend per D: compare its average over the first half of sampled prompts to the second half — ↑ / ↓ when they differ by ≥ 0.5, stable otherwise.
 4. Identify the **single weakest pattern** (which D is consistently low across prompts).
 5. Pick **one concrete past prompt** as the case study — show the original and a rewrite.
-6. If the pattern suggests automation, propose **one new skill** (defer to `skill-opportunity-finder` for the full proposal — just name it + one-line rationale here).
+6. If the pattern suggests automation, propose **one new skill** (defer to `skill-opportunity-finder` for the full proposal — just name it + one-line rationale here). Where `skill-opportunity-finder` is not installed, the kebab-name + one-line rationale **is** the whole deliverable: drop the template's pointer line and note the companion skill is optional.
 
 Output template:
 
