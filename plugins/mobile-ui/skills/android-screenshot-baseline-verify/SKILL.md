@@ -44,7 +44,11 @@ BASE=$(find <module-dir> -type d \( -name screenshots -o -name snapshots -o -nam
 
 Search from the module under test, not the repo root — in a multi-module repo
 a root-wide search finds *some* module's baselines and reports another module's
-count as this one's.
+count as this one's. And count only the directory owned by the framework step 1
+selected: the names differ per framework, so when more than one candidate turns
+up, resolve which one the chosen verify task actually reads before trusting the
+count — an AGP `reference` directory can make the number non-zero while the
+Roborazzi task you are about to run has no baselines at all.
 
 Zero baselines means there is nothing to verify and the run will pass vacuously, or fail for "missing golden" — which is a recording job, not a verification one. Send it to `android-screenshot-baseline-record`.
 
