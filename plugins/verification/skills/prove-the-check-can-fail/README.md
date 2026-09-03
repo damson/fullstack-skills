@@ -35,10 +35,13 @@ guarding anything?
    `git checkout <file>` to restore — that discards any uncommitted work the
    file already had.
 3. **Run the check the way CI runs it.** Same task, same flags.
-   - Still green → the check is inert. That finding now matters more than
-     whatever you were doing.
+   - Still green → suspect the check is inert; rule out caching, a filter that
+     never selected it, and a mutated file the run does not read before
+     concluding. Once confirmed, that finding matters more than whatever you
+     were doing.
    - Finished suspiciously fast → suspect caching (`--rerun-tasks`,
-     `--no-cache`, `--force`). A cached pass invalidates the experiment.
+     `--no-cache`, a preceding `cargo clean`). A cached pass invalidates the
+     experiment.
    - Red → confirm the failure message names *this* defect, not something else.
 4. **Restore and re-run**: `cmp "$TMPDIR/orig" policy.sql`, `git status`, green
    again from the restored state.
