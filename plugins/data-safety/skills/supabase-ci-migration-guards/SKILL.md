@@ -131,6 +131,9 @@ CI:
 ```bash
 docker run --rm --name pg-ci -e POSTGRES_PASSWORD=test -p 5432:5432 -d postgres:17
 
+# -d returns before Postgres accepts connections — wait, bounded
+timeout 30 sh -c 'until docker exec pg-ci pg_isready -U postgres >/dev/null 2>&1; do sleep 1; done'
+
 # Bootstrap the same roles CI does — the list comes from the workflow file
 psql "host=localhost user=postgres password=test" -c "
   create role anon;
@@ -166,6 +169,7 @@ Future maintainers reading the migration cold should see why the column is uncon
 - The `CREATE OR REPLACE FUNCTION` case is genuinely ambiguous because external API consumers may already depend on the old return shape. Pause, ask the user — dropping the function could break clients.
 - The user explicitly says "this migration is Supabase-only, skip CI compatibility" — they may be running it only via `supabase db push` against the cloud. Confirm before omitting the guards.
 - The project uses a non-Postgres dialect for CI (e.g. SQLite for fast tests) — the `to_regnamespace` probe doesn't exist there. Ask before adapting.
+- **No CI workflow declares a Postgres image or bootstrap roles** — step 6 has nothing authoritative to read, and the worked-example values would silently stand in for the project's. Ask for the real values instead of smoke-testing against the example's.
 
 ## Quick reference card
 

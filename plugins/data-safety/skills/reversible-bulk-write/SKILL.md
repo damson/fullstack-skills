@@ -28,10 +28,12 @@ A bulk write is judged by what you can undo, not by what you intended.
    first buys you a write plus a rollback for nothing. Run the whole chain in
    dry-run, read the projected counts, and only then apply.
    - Counts that look *too clean* (100%, 0%, exactly N) deserve a second look,
-     and the look is concrete: sample five rows the dry run says it will touch
-     and five it says it will skip, and check each against the predicate by
-     hand. Ten rows agreeing is evidence; a round number agreeing with itself
-     is not.
+     and the look is concrete: sample up to five rows from each side the dry
+     run reports — touched and skipped — and check each against the predicate
+     by hand. At exactly 0% or 100% one side is empty, so hand-pick rows that
+     *should* have landed there and confirm the predicate's reason for putting
+     them on the other side; ten rows agreeing is evidence, a round number
+     agreeing with itself is not.
 
 3. **Write the rollback before applying, and prove its columns exist.** Query
    `information_schema.columns` or read the migration — do not guess a foreign

@@ -24,21 +24,25 @@ The deliverable is a role × capability matrix for the PR body.
 
    ```js
    const pg = require('pg');
-   const client = new pg.Client(process.env.DEV_DATABASE_URL);
-   await client.connect();
+   const url = process.env.DEV_DATABASE_URL;
+   if (!url) throw new Error('no dev connection string — stop');  // unset, pg
+   const client = new pg.Client(url);   // falls back to PG* env / localhost and
+   await client.connect();              // connects *somewhere* without saying so
    ```
 
-   Before `begin`, ask the server what it is and compare against the production
-   identifiers you know:
+   Before `begin`, ask the server what it is and compare against the dev target
+   you meant to reach — the host and database named by the same source the URL
+   came from:
 
    ```sql
    select current_database(), inet_server_addr(), inet_server_port();
    ```
 
-   A host, project ref or database name that matches production — or that you
-   cannot rule out as production — is the first STOP condition below, now
-   mechanically checkable instead of known out-of-band. Refuse before `begin`,
-   not after.
+   Match against what dev is *known* to be, not against a list of what
+   production might be: anything that is not the expected dev identity —
+   including an identity you cannot place — is the first STOP condition below,
+   now mechanically checkable instead of known out-of-band. Refuse before
+   `begin`, not after.
 
 1. **Name the invariant and record it before touching anything.** One count on
    the table the migration must *not* reach — `entries`, or whatever the change
@@ -84,8 +88,10 @@ The deliverable is a role × capability matrix for the PR body.
    ```
 
    On plain Postgres the rule is the same, only found instead of known: read
-   each policy's qual from `pg_policies`, find the role it is `to` and the
-   function or setting the qual consults, and `set local` exactly those.
+   each policy's `qual` AND `with_check` from `pg_policies` — an `update` can
+   pass one and fail the other, and an `insert` answers only to `with_check` —
+   find the `roles` it applies to and the function or setting either expression
+   consults, and `set local` exactly those.
 
    Read the definition first rather than assuming which setting it consults —
    the wrong one silently yields an anonymous session that fails every check for
