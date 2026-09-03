@@ -53,7 +53,8 @@ when the whole schema is missing, so the namespace check comes first.
 A two-line header comment explains *why* the column is unconstrained;
 otherwise a future maintainer "helpfully" tightens it and breaks CI again. And
 before pushing, the whole chain is smoke-tested locally against a Postgres
-container with the same four bootstrapped roles CI uses — about 30 seconds.
+container whose image tag and bootstrapped roles are read from the CI workflow
+itself — about 30 seconds.
 
 ## Related
 
