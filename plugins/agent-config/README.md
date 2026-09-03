@@ -5,7 +5,7 @@ Writing and auditing agent instruction files — eight skills for keeping a
 something worth writing down.
 
 ```bash
-claude plugin install agent-config@fullstack-skills --yes
+claude plugin install agent-config@hard-won-skills --yes
 ```
 
 Instruction files fail quietly: a rule duplicated into two files drifts until

@@ -4,7 +4,7 @@ Two skills for the same failure: believing something that has never been
 observed doing what it claims.
 
 ```bash
-claude plugin install verification@fullstack-skills --yes
+claude plugin install verification@hard-won-skills --yes
 ```
 
 A green check is not evidence until it has been seen red — passing proves it

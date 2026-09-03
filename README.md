@@ -1,10 +1,10 @@
-# fullstack-skills
+# hard-won-skills
 
 *Hard-won habits for [Claude Code](https://claude.com/claude-code), packaged so
 you don't have to win them the hard way too.*
 
-[![CI](https://github.com/damson/fullstack-skills/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/damson/fullstack-skills/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/damson/fullstack-skills?label=release&color=blue)](https://github.com/damson/fullstack-skills/releases/latest)
+[![CI](https://github.com/damson/hard-won-skills/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/damson/hard-won-skills/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/damson/hard-won-skills?label=release&color=blue)](https://github.com/damson/hard-won-skills/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Made for Claude Code](https://img.shields.io/badge/made%20for-Claude%20Code-d97757.svg)](https://claude.com/claude-code)
 
@@ -34,8 +34,8 @@ the scars: each skill knows not just what to do, but when to stop and ask.
 Two commands and you're in:
 
 ```bash
-claude plugin marketplace add damson/fullstack-skills
-claude plugin install git-workflow@fullstack-skills --yes
+claude plugin marketplace add damson/hard-won-skills
+claude plugin install git-workflow@hard-won-skills --yes
 ```
 
 Swap `git-workflow` for any plugin in [the table below](#-pick-your-themes),
