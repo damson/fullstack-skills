@@ -126,13 +126,16 @@ Edit the PR body in place rather than replacing it:
 
 ```bash
 gh pr view "$PR" --json body -q .body > /tmp/pr-body.md
-# no screenshots section yet? append "## Screenshots" plus the table header first:
-#   | Surface | Screenshot |
-#   |---|---|
-# then append a row to the section:
-#   | `/<surface>` | ![<surface>](https://github.com/$SLUG/raw/$SHA/<path-in-repo>.png) |
+grep -q '^## Screenshots' /tmp/pr-body.md ||
+  printf '\n## Screenshots\n\n| Surface | Screenshot |\n|---|---|\n' >> /tmp/pr-body.md
+printf '| `/<surface>` | ![<surface>](https://github.com/%s/raw/%s/<path-in-repo>.png) |\n' \
+  "$SLUG" "$SHA" >> /tmp/pr-body.md
 gh pr edit "$PR" --body-file /tmp/pr-body.md
 ```
+
+The plain append lands the row in the table only while the section is the last
+thing in the body — where the template puts content after it, insert the row
+under the header instead of appending.
 
 ## When to STOP and ask
 

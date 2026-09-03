@@ -62,11 +62,15 @@ newest one:
 ```bash
 run=$(gh run list -b "$BASE" -w "$WORKFLOW" -s success -L 1 \
         --json databaseId -q '.[0].databaseId')
-[ -n "$run" ] && gh run download "$run" -n coverage-baseline -D baseline/
+if [ -n "$run" ] && gh run download "$run" -n coverage-baseline -D baseline/; then
+  :   # baseline in baseline/
+else
+  echo "no baseline for $BASE — reporting absolute figures only"
+fi
 ```
 
-An empty `$run` or a failed download is the missing-baseline case below — fall
-through, never fail.
+An empty `$run` or a failed download is the missing-baseline case below — the
+`if` keeps either from killing a fail-fast CI step; fall through, never fail.
 
 **A missing baseline is not an error.** First run, a new base branch, an expired
 artifact: degrade to absolute figures and say so. Never fail the job, and never

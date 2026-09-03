@@ -31,8 +31,10 @@ that no longer exists. The skill:
    fails silently by handing you a real SHA that is not the one you meant.
 2. Fetches the upstream objects (`ls-remote` resolved a name without
    downloading anything), then tries `git log --oneline <old>..<new>` to name
-   what the move contains. The range still errors — the old SHA is gone — so
-   the answer comes from tree identity instead:
+   what the move contains, backed by `git merge-base --is-ancestor <old>
+   <new>` — a surviving local copy of the old SHA can make the range succeed
+   against a rewritten upstream. Here the ancestry check fails — the old SHA
+   is gone from upstream — so the answer comes from tree identity instead:
 
    ```bash
    git rev-parse <old>^{tree} <new>^{tree}

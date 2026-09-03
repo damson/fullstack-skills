@@ -71,7 +71,8 @@ Ask what each box *asserts*, and what the map does not mention at all.
    node repo:
 
    ```bash
-   npm install --no-save mermaid jsdom   # --no-save: this is an audit, not a dependency
+   npm install --no-save --no-package-lock mermaid jsdom   # an audit, not a
+   # dependency: --no-save spares package.json, --no-package-lock the lockfile
    node --input-type=module -e '
      import fs from "node:fs"; import { JSDOM } from "jsdom";
      const d = new JSDOM("<!doctype html><body>");
@@ -126,5 +127,6 @@ Ask what each box *asserts*, and what the map does not mention at all.
 - **The diagram belongs to another team** — report the stale claim, do not edit
   their file.
 - **The rot is large.** More than 3 false claims in step 1's inventory, or any
-  false claim outside the diff's subject area, means the map needs its own PR;
-  fixing it inside an unrelated change buries both.
+  false claim about files or systems the PR's changed paths never touch, means
+  the map needs its own PR; fixing it inside an unrelated change buries both.
+  Hand the out-of-scope ones over as a list in the PR body, not as edits.

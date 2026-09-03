@@ -36,7 +36,11 @@ earned it — a test count or a tree identity, cited in the commit.
    If that range errors *after a successful fetch* because the old SHA no
    longer exists, the upstream history was rewritten — go to step 3, because
    "what changed" has a different answer than the log. (Before a fetch, the
-   same error means only that the objects are not local yet.)
+   same error means only that the objects are not local yet.) A surviving
+   local copy of `<old>` can also let the range *succeed* against a rewritten
+   upstream, so confirm ancestry rather than trusting the absence of an error:
+   `git merge-base --is-ancestor <old> <new>` — a non-zero exit is the rewrite
+   case, step 3.
 
 3. **After an upstream rewrite, prove what survived**:
    `git rev-parse <old>^{tree} <new>^{tree}`. Identical trees mean the rewrite
