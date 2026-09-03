@@ -1,0 +1,88 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1280px; height: 640px; overflow: hidden; }
+  body {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    background:
+      radial-gradient(1100px 700px at 18% -10%, #faf5ec 0%, #f4eee3 45%, #ece3d3 100%);
+    color: #221c15;
+    position: relative;
+  }
+  body::before {
+    content: "";
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(34,28,21,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(34,28,21,0.05) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(900px 600px at 30% 20%, #000 30%, transparent 75%);
+    -webkit-mask-image: radial-gradient(900px 600px at 30% 20%, #000 30%, transparent 75%);
+  }
+  .frame {
+    position: absolute; inset: 0;
+    padding: 72px 88px 64px;
+    display: flex; flex-direction: column;
+  }
+  .session {
+    font-size: 24px; line-height: 1.7; font-weight: 500;
+  }
+  .session .prompt { color: #c9603c; font-weight: 700; }
+  .session .cmd { color: #221c15; font-weight: 700; }
+  .session .out { color: #776b5d; display: block; }
+  .session .ok { color: #47702f; font-weight: 700; }
+  .cursor {
+    display: inline-block; width: 13px; height: 26px;
+    background: #c9603c; vertical-align: -4px; margin-left: 6px;
+    box-shadow: 0 2px 14px rgba(201,96,60,0.45);
+  }
+  .title {
+    margin-top: auto;
+    font-weight: 800;
+    font-size: 88px;
+    line-height: 1.04;
+    letter-spacing: -0.035em;
+    color: #221c15;
+  }
+  .title em { font-style: normal; color: #c9603c; }
+  .sub {
+    margin-top: 26px;
+    font-size: 26px;
+    font-weight: 400;
+    color: #5c5347;
+    letter-spacing: -0.01em;
+  }
+  .rule {
+    margin-top: 34px;
+    display: flex; align-items: center; gap: 18px;
+    font-size: 21px;
+  }
+  .rule .line { flex: 1; height: 1.5px; background: linear-gradient(90deg, #c9603c 0, rgba(201,96,60,0.12) 60%, transparent); }
+  .repo { color: #c9603c; font-weight: 700; }
+</style>
+</head>
+<body>
+  <div class="frame">
+    <div class="session">
+      <span><span class="prompt">❯</span> <span class="cmd">claude</span></span>
+      <span class="out">╭─ plugin marketplace added: <span class="ok">hard-won-skills</span> — themed plugins</span>
+      <span class="out">╰─ every skill extracted from a session where not having it <span class="ok">cost something</span><span class="cursor"></span></span>
+    </div>
+    <div class="title">Hard-won habits<br>for <em>Claude Code</em></div>
+    <div class="sub">Battle-earned skills — git flow that squash-merges can't break, checks proven able to fail, data writes that can be undone.</div>
+    <div class="rule"><span class="repo">damson/hard-won-skills</span><span class="line"></span></div>
+  </div>
+</body>
+</html>
+<!--
+  Source of the repository's GitHub social preview image (Settings → General).
+  Render at exactly 1280×640 (headless browser screenshot of this file served
+  over HTTP so the Google Fonts load) and upload the PNG. Copy is count-free on
+  purpose — a new theme or skill changes nothing here.
+-->
