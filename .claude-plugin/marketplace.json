@@ -1,7 +1,7 @@
 {
   "$schema": "https://www.schemastore.org/claude-code-marketplace.json",
-  "name": "fullstack-skills",
-  "description": "Skills for full-stack work, grouped by theme \u2014 install only the themes you work in.",
+  "name": "hard-won-skills",
+  "description": "Hard-won habits for Claude Code, grouped by theme — install only the themes you work in.",
   "owner": {
     "name": "Damien Dagnet"
   },

@@ -5,7 +5,7 @@ git and GitHub quietly do something other than what everyone at the keyboard
 believed.
 
 ```bash
-claude plugin install git-workflow@fullstack-skills --yes
+claude plugin install git-workflow@hard-won-skills --yes
 ```
 
 The family resemblance: each of these failures *looks* fine from the outside.

@@ -1,4 +1,4 @@
-# CLAUDE.md — fullstack-skills
+# CLAUDE.md — hard-won-skills
 
 Read [README.md](README.md) first — what this marketplace is, the themes, and
 the two validators. Releases: [docs/releases.md](docs/releases.md). The
