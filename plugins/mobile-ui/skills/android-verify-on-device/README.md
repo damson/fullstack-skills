@@ -60,7 +60,8 @@ Confirming a settings toggle actually persists and re-renders:
    not that the feature is broken.
 6. **Prefer the store to the pixels** for state claims:
    `adb shell run-as <pkg> cat …/shared_prefs/<name>.xml` settles in one
-   command what a screenshot argues about.
+   command what a screenshot argues about — on a debuggable build; the skill
+   gives the fallback when it is not.
 7. **Restore what you changed** — device-wide settings outlive the run.
 
 The report names the build, the device and API level, and what was driven;

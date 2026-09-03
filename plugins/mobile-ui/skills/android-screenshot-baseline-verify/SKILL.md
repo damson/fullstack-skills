@@ -50,6 +50,10 @@ Zero baselines means there is nothing to verify and the run will pass vacuously,
 ./gradlew :<module>:<verify-task> --tests "<fully.qualified.TestClass>*"
 ```
 
+`--tests` is a unit-test filter, so it fits Roborazzi and Paparazzi. AGP's
+`validate<Variant>ScreenshotTest` does not accept it — the build fails on the
+flag, not on your pixels. Scope that one by module and run it unfiltered.
+
 ### 4. Confirm comparisons actually happened
 
 Do not accept the exit code alone. Ask the build for its own tally first, and only

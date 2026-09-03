@@ -116,8 +116,14 @@ A baseline is a contract. A wrong one locks in the wrong appearance and every fu
 ### 6. Commit the images with the test that produces them
 
 ```bash
-git add "$BASE" "$(git status --porcelain | grep -oE '[^ ]*ScreenshotTest\.kt$' | head -1)"
+git add "$BASE"
+git status --porcelain | awk '$NF ~ /ScreenshotTest\.kt$/ {print $NF}' | xargs git add
 ```
+
+`$NF` — the last field — is what makes the second line honest: it stages *every*
+changed test file, not just the first, and on a rename line (`R  old -> new`) it
+picks the new path instead of choking on the arrow. If the paths contain spaces,
+skip the pipe and `git add` each file by name.
 
 One commit. Split across two, CI runs the test against goldens that are not there yet and fails on a change that is actually correct.
 

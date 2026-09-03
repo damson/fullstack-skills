@@ -111,6 +111,11 @@ frame changed since the action.
    adb shell run-as <pkg> cat /data/data/<pkg>/shared_prefs/<name>.xml
    ```
 
+   `run-as` works only on a debuggable build. "package not debuggable" means the
+   build, not the state: reinstall the debug variant (step 1) and re-drive — or,
+   where reinstalling would wipe the very state under test, fall back to reading
+   the outcome off a confirmed frame (steps 3–6).
+
 8. **Restore what you changed.** Emulator-wide settings outlive the run:
    `adb shell cmd uimode night auto`, and any
    `cmd overlay enable com.android.internal.display.cutout.emulation.*`. Delete files
