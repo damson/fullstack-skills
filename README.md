@@ -1,14 +1,14 @@
-# fullstack-skills
+# hard-won-skills
 
 *Hard-won habits for [Claude Code](https://claude.com/claude-code), packaged so
 you don't have to win them the hard way too.*
 
-[![CI](https://github.com/damson/fullstack-skills/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/damson/fullstack-skills/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/damson/fullstack-skills?label=release&color=blue)](https://github.com/damson/fullstack-skills/releases/latest)
+[![CI](https://github.com/damson/hard-won-skills/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/damson/hard-won-skills/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/damson/hard-won-skills?label=release&color=blue)](https://github.com/damson/hard-won-skills/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Made for Claude Code](https://img.shields.io/badge/made%20for-Claude%20Code-d97757.svg)](https://claude.com/claude-code)
 
-👋 **Welcome!** This is a marketplace of **28 skills in 5 themed plugins** —
+👋 **Welcome!** This is a marketplace of **29 skills in 5 themed plugins** —
 small, careful procedures your agent picks up automatically when a task calls
 for them: rebasing a stack of PRs without losing one, proving a screenshot test
 actually compared pixels, probing a migration without leaving a trace.
@@ -34,8 +34,8 @@ the scars: each skill knows not just what to do, but when to stop and ask.
 Two commands and you're in:
 
 ```bash
-claude plugin marketplace add damson/fullstack-skills
-claude plugin install git-workflow@fullstack-skills --yes
+claude plugin marketplace add damson/hard-won-skills
+claude plugin install git-workflow@hard-won-skills --yes
 ```
 
 Swap `git-workflow` for any plugin in [the table below](#-pick-your-themes),

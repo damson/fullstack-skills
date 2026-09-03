@@ -4,7 +4,7 @@ Writes that are hard to undo — five skills for the operations where "oops"
 is a rollback plan written too late, or not at all.
 
 ```bash
-claude plugin install data-safety@fullstack-skills --yes
+claude plugin install data-safety@hard-won-skills --yes
 ```
 
 The common thread is irreversibility. A migration's real behaviour only shows
