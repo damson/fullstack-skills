@@ -29,9 +29,14 @@ command pass?", this one asks "would it have caught the bug?".
    `cp "$TMPDIR/orig" <file>`. Never `git checkout <file>` — that also discards any
    uncommitted work the file already had.
 
-3. **Run the check the way CI runs it.** Same task, same flags. Then read the output.
+3. **Run the check the way CI runs it.** Same task, same flags — lifted from the
+   workflow YAML or pipeline config, not reconstructed from memory. Then read the
+   output.
    - **Still green → the check is inert.** Stop. This is the finding, and it matters
-     more than whatever you were originally doing. Find out why before continuing.
+     more than whatever you were originally doing. Find out why before continuing —
+     start with: did the runner collect the test at all (compare the reported test
+     count), does the task's name, filter or file pattern actually select it, and
+     is the file you mutated the one the run reads.
    - **Suspiciously fast → suspect caching.** A build tool reporting success in under
      a second usually skipped the work. Re-run with `--rerun-tasks` (Gradle),
      `--no-cache` (jest), `--force` (cargo) or the equivalent. **A cached pass is not

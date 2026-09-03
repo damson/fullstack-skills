@@ -35,6 +35,11 @@ catch the bug, this one asks whether the library does what its name implies.
    find ~/.gradle/caches/modules-2/files-2.1 -path '*<artifact>*' -name '*.jar' | grep -v sources
    ```
 
+   An empty result means the artifact never resolved into this cache, not that it
+   does not exist: force resolution (run the build, or
+   `./gradlew <module>:dependencies --configuration runtimeClasspath`) and check
+   `~/.m2/repository` — mavenLocal and repo-local caches live outside the Gradle one.
+
    A `-sources.jar` beside it is better than bytecode — read that and skip to step 5.
    For a Gradle plugin, the jar under `<plugin-id>/<version>/` holds the task classes.
 
@@ -49,8 +54,10 @@ catch the bug, this one asks whether the library does what its name implies.
      constructor call.
    - **Kotlin default arguments** live in the `$default` synthetic bridge, not the
      signature.
-   - **Serialization shape** lives in the generated `$Companion`; look for the JSON
-     configuration builder for whether nulls are written or omitted.
+   - **Serialization shape** lives in the generated `$Companion`; whether nulls are
+     written or omitted is in the JSON configuration builder — search the `javap`
+     output for `explicitNulls` and `encodeDefaults` (kotlinx.serialization) or
+     `serializeNulls` (Moshi/Gson).
    - **Which branch a task takes** — decompile the top-level `…Kt` class holding the
      function, and read the conditional.
 
