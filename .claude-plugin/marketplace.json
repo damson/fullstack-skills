@@ -1,14 +1,14 @@
 {
   "$schema": "https://www.schemastore.org/claude-code-marketplace.json",
   "name": "hard-won-skills",
-  "description": "Hard-won habits for Claude Code, grouped by theme — install only the themes you work in.",
+  "description": "Hard-won habits for Claude Code, grouped by theme \u2014 install only the themes you work in.",
   "owner": {
     "name": "Damien Dagnet"
   },
   "plugins": [
     {
       "name": "git-workflow",
-      "description": "Branch, worktree and pull-request hygiene: rebasing open PRs onto a merged base, replying to review findings, pruning dead branches, embedding screenshots that actually render, posting coverage as one sticky comment with a threshold band, and checking a diagram still matches the system.",
+      "description": "Branch, worktree and pull-request hygiene: rebasing open PRs onto a merged base, replying to review findings, pruning dead branches, embedding screenshots that actually render, posting coverage as one sticky comment with a threshold band, and checking a diagram still matches the system, waiting out a PR's checks without misreading silence as success, and fanning a batch of independent fixes out to parallel agents as file-disjoint PRs.",
       "author": {
         "name": "Damien Dagnet"
       },

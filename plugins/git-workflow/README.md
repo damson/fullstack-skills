@@ -28,6 +28,8 @@ happen.
 | [`github-pr-screenshot-embed`](skills/github-pr-screenshot-embed/README.md) | The one host rule that keeps an embedded image rendering for reviewers on a private repo |
 | [`audit-diagram-claims`](skills/audit-diagram-claims/README.md) | Treat every diagram node as a set of claims and check each against reality before ticking "architecture updated" |
 | [`coverage-pr-comment`](skills/coverage-pr-comment/README.md) | Coverage as one sticky comment with a delta and a threshold band, instead of a bare percentage nobody acts on |
+| [`await-pr-checks`](skills/await-pr-checks/README.md) | Wait out a PR's CI at a pinned SHA and report a per-check verdict — an empty conclusion is pending, never passing |
+| [`parallel-pr-fanout`](skills/parallel-pr-fanout/README.md) | Land a batch of independent fixes as file-disjoint PRs built by parallel agents, with briefs and scope fences that hold |
 | [`bump-vendored-pin`](skills/bump-vendored-pin/README.md) | Move a pinned vendored dependency only with the evidence that earned the new commit |
 | [`wire-scheduled-workflow`](skills/wire-scheduled-workflow/README.md) | Check a cron workflow is actually registered — GitHub only arms schedules from the default branch |
 
