@@ -50,9 +50,9 @@ that no longer exists. The skill:
    same distinctive `upload-pack: not our ref` fetch error, and each pin
    moves with its own change. A dead submodule pin is recovered from inside
    the submodule — fetch a live branch there, check out the new SHA, stage the
-   gitlink — and consumers the checkout cannot see are found with a forge-wide
-   code search for the old SHA, or reported as unchecked when even that is
-   unavailable. When no copy of the old commit survives, the commit message
+   gitlink — and consumers the checkout cannot see are found with a code search
+   for the old SHA run once per owner that might pin it, with every owner it
+   did not reach reported as unchecked rather than assumed clean. When no copy of the old commit survives, the commit message
    says the range is not diffable and the suite run carries the review.
 4. Runs the vendored copy's own test suite at the new pin, from the consumer's
    checkout, using whatever the vendored repo's own CI runs.

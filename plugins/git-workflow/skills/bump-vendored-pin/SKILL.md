@@ -67,16 +67,17 @@ earned it — a test count or a tree identity, cited in the commit.
    inside the submodule and checking out the new SHA there, then staging the
    gitlink.
 
-   The inventory has to come from somewhere outside this checkout: a forge-wide
-   code search for the dead SHA (`gh search code <old-sha> --owner <owner>
-   --limit 100` — it returns 30 by default, and the search API caps out at
-   1000), the consumers the upstream repo's own README or release notes name,
-   and whoever asked for the bump. Where none of those is available — no forge
-   search, a private consumer you cannot clone — or where the search comes back
-   at its limit, so there may be more, **the sweep is not complete and must not
-   be reported as complete**: name each unchecked consumer, and any truncation,
-   in the commit or PR so the next dead-pin failure is recognised instead of
-   rediscovered.
+   The inventory has to come from somewhere outside this checkout: a code
+   search for the dead SHA, once per owner that might pin it (`gh search code
+   <old-sha> --owner <owner> --limit 100` — it returns 30 by default, and the
+   search API caps out at 1000), the consumers the upstream repo's own README
+   or release notes name, and whoever asked for the bump. The search is only
+   ever as wide as the owners you name and the repos your token can see.
+   Wherever that stops short — an owner you did not search, a private consumer
+   you cannot clone, a result set that came back at its limit so there may be
+   more — **the sweep is not complete and must not be reported as complete**:
+   name each unchecked owner or consumer in the commit or PR so the next
+   dead-pin failure is recognised instead of rediscovered.
 
 5. **Run the vendored copy's own test suite at the new pin, from the
    consumer's checkout** — that is the copy that will actually execute, and it
