@@ -8,6 +8,7 @@ you don't have to win them the hard way too.*
 [![CI](https://github.com/damson/hard-won-skills/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/damson/hard-won-skills/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/damson/hard-won-skills?label=release&color=blue)](https://github.com/damson/hard-won-skills/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Coverage](https://codecov.io/gh/damson/hard-won-skills/graph/badge.svg)](https://codecov.io/gh/damson/hard-won-skills)
 [![Made for Claude Code](https://img.shields.io/badge/made%20for-Claude%20Code-d97757.svg)](https://claude.com/claude-code)
 
 👋 **Welcome!** This is a marketplace of **31 skills in 5 themed plugins**:

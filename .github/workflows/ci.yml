@@ -21,6 +21,10 @@ jobs:
   # move together.
   validate:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Codecov's tokenless upload authenticates with an OIDC token.
+      id-token: write
     # The whole job is seconds of work. Ten minutes is a hang, not slowness — fail
     # so the pull request shows red instead of sitting in_progress for hours.
     timeout-minutes: 10
@@ -38,3 +42,24 @@ jobs:
       # the README still tells the truth about what is here.
       - name: Marketplace wiring
         run: python3 scripts/validate-marketplace.py
+
+      # Unit tests for the three Python scripts above and the release tooling,
+      # run under coverage so regressions in the validators are visible as a
+      # number, not just a feeling. The scripts stay stdlib-only; pytest and
+      # coverage are dev/CI dependencies, installed here and nowhere else.
+      - name: Script tests (pytest + coverage)
+        run: |
+          python3 -m pip install --quiet pytest coverage
+          python3 -m coverage run --source=scripts -m pytest tests/ -q
+          python3 -m coverage report
+          python3 -m coverage xml
+
+      # Informational only: codecov.yml marks both statuses informational and
+      # fail_ci_if_error is off, so an outage there cannot block a release.
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@0fb7174895f61a3b6b78fc075e0cd60383518dac # v5.5.5
+        with:
+          use_oidc: true
+          files: coverage.xml
+          disable_search: true
+          fail_ci_if_error: false
