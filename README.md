@@ -1,5 +1,7 @@
 # hard-won-skills
 
+![Terminal-styled banner: a claude session announcing the hard-won-skills marketplace, over the tagline "Hard-won habits for Claude Code"](docs/assets/social-preview.png)
+
 *Hard-won habits for [Claude Code](https://claude.com/claude-code), packaged so
 you don't have to win them the hard way too.*
 
