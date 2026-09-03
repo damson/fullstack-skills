@@ -24,7 +24,10 @@ agent ships a plausible fix to the wrong problem.
    docs table that indexes scripts, the README section a change falsifies, the
    `.gitignore`. Two units sharing any file merge into one unit or run in
    sequence. State each agent's allowed file set explicitly and name the files
-   it must NOT touch as "owned by parallel agents".
+   it must NOT touch as "owned by parallel agents". File disjointness is
+   necessary, not sufficient: a producer/consumer contract, a migration, a
+   generated file and its source can couple units that share no path — check
+   for those couplings before declaring merge order free.
 
 2. **Write the brief an agent cannot reconstruct.** Findings with `file:line`,
    what was already ruled out, the repo's invariants that apply, and the exact
@@ -39,6 +42,9 @@ agent ships a plausible fix to the wrong problem.
    - PR body from the repo's template, ticking only what the agent verified,
      CI left unticked at open;
    - never merge, never push protected branches;
+   - before pushing, `git diff --name-only origin/<base>...HEAD` must be a
+     subset of the allowed file set — an extra path stops the unit before PR
+     creation; the fence is enforced against the diff, not trusted to intent;
    - findings OUTSIDE the allowed file set go in the PR body as flagged
      follow-ups, never as fixes — the scope fence is what makes the batch
      mergeable.

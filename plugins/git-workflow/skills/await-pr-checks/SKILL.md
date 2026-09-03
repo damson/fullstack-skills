@@ -32,21 +32,29 @@ session:
    pushed, confirm it equals the commit you pushed. Every later read is judged
    against this SHA; never watch "the latest run" unpinned.
 
-2. **Enumerate the checks you expect by name** (from the previous run, the
-   required-checks ruleset, or the workflow files). The terminal condition is
-   over this list — a missing check is *pending*, not passing.
+2. **Enumerate the checks you expect by name** — from the required-checks
+   ruleset, the previous run, or the workflow files *read on the base branch,
+   not the PR's*: a PR can rename or delete exactly the check that would have
+   failed it. The terminal condition is over this list — a missing check is
+   *pending*, not passing.
 
 3. **Poll on these rules** (30s for hosted runners; back off, don't tighten):
-   - A run counts only if its `headSha` equals the pinned SHA.
-   - A check is terminal only when its `conclusion` is one of
-     `SUCCESS`, `FAILURE`, `CANCELLED`, `TIMED_OUT`, `ACTION_REQUIRED`,
-     `SKIPPED` (decide per check whether SKIPPED is acceptable). Empty,
-     `QUEUED`, `IN_PROGRESS`, `PENDING` — keep waiting.
+   - A run counts only if its `headSha` equals the pinned SHA — and only its
+     newest attempt: a rerun keeps the SHA but opens a fresh `run_attempt`, so
+     an older attempt's terminal state is not the verdict.
+   - A check is terminal only when its `status` is `COMPLETED` — then judge
+     the `conclusion`: `SUCCESS` passes; `FAILURE`, `CANCELLED`, `TIMED_OUT`,
+     `ACTION_REQUIRED`, `STARTUP_FAILURE` fail; `SKIPPED`, `NEUTRAL`, `STALE`
+     are a per-check decision to make explicitly, never by omission. Anything
+     not completed — empty, `QUEUED`, `IN_PROGRESS`, `PENDING` — keep waiting.
    - If `headRefOid` moves mid-watch, the answer is void: re-pin and restart.
 
-4. **On any non-success, fetch the cause in the same motion** —
-   `gh run view <id> --log-failed | tail` — and report the failing step's
-   evidence, not just the colour.
+4. **On any non-success, fetch the cause in the same motion.** Resolve the
+   failing check to its workflow run for the pinned SHA, then
+   `gh run view <run-id> --log-failed | tail`. A check with no Actions run
+   behind it (an external status — a review bot, a third-party gate) keeps its
+   evidence at its `details_url`: follow that, or report the logs as
+   unavailable — never skip the cause because the id was not obvious.
 
 5. **Report per check, by name** (`Coverage report: SUCCESS, ShellCheck:
    SUCCESS`), never a bare "checks are green". A verdict that names nothing
