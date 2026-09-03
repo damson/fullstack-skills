@@ -101,8 +101,11 @@ are a valid setup, not a finding. Where symlinks exist:
   that can drift from the config repo. The test for "meant to be centralised":
   a plain file is a drift candidate only when a counterpart already resolves
   into the config repo — a sibling file in the same directory, or the same
-  logical file (`CLAUDE.md`, `AGENTS.md`) in another project the repo manages.
-  A plain file with no such counterpart is a valid setup, not a finding
+  logical file (`CLAUDE.md`, `AGENTS.md`) in another project the repo manages,
+  where "manages" is read from the config repo itself: the projects its
+  registry or its existing symlink targets already name, never guessed by
+  scanning the filesystem. A plain file with no such counterpart is a valid
+  setup, not a finding
 
 ## Step 3: Report
 

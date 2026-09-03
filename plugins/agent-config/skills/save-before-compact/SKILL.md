@@ -70,8 +70,9 @@ applied/skipped ledger.
 ### Step 5 — Verify & score
 
 After applying:
-- **Structural**: if any skill file was touched, run the repo's skill-structure
-  tests (found in Step 1); otherwise re-Read each edited file and check two
+- **Structural**: if any skill file was touched and Step 1 found a
+  skill-structure suite, run it; otherwise — no suite, or no skill file
+  touched — re-Read each edited file and check two
   things — the applied line matches the approved diff exactly, and any YAML
   frontmatter still parses (a stray `:` or unclosed quote silently breaks the
   whole file's load).
