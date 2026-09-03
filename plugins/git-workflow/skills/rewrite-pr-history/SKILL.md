@@ -83,8 +83,10 @@ Run the project's documented test command. Detect it, never assume a toolchain:
 a `test` / `check` / `verify` recipe in `just --list`, else `scripts.test` in
 `package.json`, else a `test` target in the `Makefile`, else the language
 default (`bats tests/`, `pytest`, `cargo test`, `go test ./...`). Also run the
-linter the repo's CI uses (read `.github/workflows/` for hints). Don't push if
-checks fail — fix locally first.
+linter the repo's CI uses (read `.github/workflows/` for hints); if no lint
+step is discoverable in the CI config or the task runner, skip linting and say
+so in the report — never stall on the search. Don't push if checks fail — fix
+locally first.
 
 ### 6. Force-push with lease
 

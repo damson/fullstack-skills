@@ -24,10 +24,19 @@ earned it — a test count or a tree identity, cited in the commit.
    and a stale one fails silently — it hands you a real SHA that is simply not
    the one you meant.
 
-2. **Name what the move contains**: `git log --oneline <old>..<new>` in the
-   upstream. If that range errors because the old SHA no longer exists, the
-   upstream history was rewritten — go to step 3, because "what changed" has a
-   different answer than the log.
+2. **Name what the move contains.** `ls-remote` resolved a name without
+   downloading anything, so fetch the objects first, into the vendored
+   checkout — the same one the next commands run from:
+
+   ```bash
+   git fetch <url> <branch>
+   git log --oneline <old>..<new>
+   ```
+
+   If that range errors *after a successful fetch* because the old SHA no
+   longer exists, the upstream history was rewritten — go to step 3, because
+   "what changed" has a different answer than the log. (Before a fetch, the
+   same error means only that the objects are not local yet.)
 
 3. **After an upstream rewrite, prove what survived**:
    `git rev-parse <old>^{tree} <new>^{tree}`. Identical trees mean the rewrite

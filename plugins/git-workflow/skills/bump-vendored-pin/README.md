@@ -29,9 +29,10 @@ that no longer exists. The skill:
 1. Resolves the new SHA from the upstream **remote** — `git ls-remote <url>
    <branch>` — never a local clone, which can be stale in either direction and
    fails silently by handing you a real SHA that is not the one you meant.
-2. Tries `git log --oneline <old>..<new>` to name what the move contains. The
-   range errors — the old SHA is gone — so the answer comes from tree identity
-   instead:
+2. Fetches the upstream objects (`ls-remote` resolved a name without
+   downloading anything), then tries `git log --oneline <old>..<new>` to name
+   what the move contains. The range still errors — the old SHA is gone — so
+   the answer comes from tree identity instead:
 
    ```bash
    git rev-parse <old>^{tree} <new>^{tree}

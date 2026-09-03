@@ -126,7 +126,10 @@ Edit the PR body in place rather than replacing it:
 
 ```bash
 gh pr view "$PR" --json body -q .body > /tmp/pr-body.md
-# append a row to the screenshots section:
+# no screenshots section yet? append "## Screenshots" plus the table header first:
+#   | Surface | Screenshot |
+#   |---|---|
+# then append a row to the section:
 #   | `/<surface>` | ![<surface>](https://github.com/$SLUG/raw/$SHA/<path-in-repo>.png) |
 gh pr edit "$PR" --body-file /tmp/pr-body.md
 ```

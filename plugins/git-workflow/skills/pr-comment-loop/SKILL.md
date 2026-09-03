@@ -105,9 +105,23 @@ For each open PR you have touched in this session — OR all open PRs in the cur
    ### Recovering a clobbered comment
 
    If the wrong comment is overwritten anyway, GitHub retains every prior
-   body: query `userContentEdits` on the comment via the GraphQL API (REST
-   does not expose it), restore the last body written by the original author
-   with a REST PATCH, and post your own reply as a **separate** comment.
+   body: query `userContentEdits` via GraphQL (REST does not expose it) —
+   both ids come off the same REST object you clobbered (`.node_id`, `.id`):
+
+   ```bash
+   gh api graphql -f query='query { node(id: "<node_id>") {
+     ... on IssueComment {
+       userContentEdits(first: 20) { nodes { editedAt editor { login } diff } }
+   } } }'
+   ```
+
+   Take the newest `diff` whose `editor` is the original author, save it as
+   the body, restore with a REST PATCH, and post your own reply as a
+   **separate** comment:
+
+   ```bash
+   gh api -X PATCH "repos/<owner>/<repo>/issues/comments/<id>" -F body=@restored.md
+   ```
 
 7. **Report back to the user** with a single line per PR:
    ```

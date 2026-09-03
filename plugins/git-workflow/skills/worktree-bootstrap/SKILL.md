@@ -91,7 +91,7 @@ Check `package.json` scripts (or the Makefile / `pyproject.toml`) for a `postins
 
 Run the cheapest command that exercises real config + deps, not just a lockfile check:
 
-- Node app: `pnpm typecheck` (or `pnpm build`), then start the dev server briefly if the change is runtime-facing.
+- Node app: `<pm> run typecheck` (or `<pm> run build`) with the package manager step 1 detected, then start the dev server briefly if the change is runtime-facing.
 - Python: `pytest -q` or `python -m <package> --help`.
 - Android/Gradle: `./gradlew help -q` — the cheapest full configure; it proves `local.properties` resolves — then the module's build/test task.
 - General: the repo's documented smoke command.

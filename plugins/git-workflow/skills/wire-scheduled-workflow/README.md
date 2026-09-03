@@ -40,8 +40,9 @@ skill:
    sharpest variant: **the workflow gates its own promotion.** A release
    workflow living only on `develop` cannot run to promote itself to `main`,
    because putting it there *is* a release. The first promotion is done by
-   hand — replicate what the workflow's proposal step would have done, open
-   the PR, merge it — and every run after that is automatic.
+   hand — read the workflow's job steps, run the commands a run would have
+   executed, open the PR it would have proposed, merge it — and every run
+   after that is automatic.
 3. Once the file lands, verifies registration and fires a dispatch, since a
    run that starts is the proof — the cron alone would leave the steps
    unexercised until its first window.
