@@ -17,6 +17,29 @@ The deliverable is a role × capability matrix for the PR body.
 
 ## Procedure
 
+0. **Connect, then prove where you are.** Every `client` below is this one. The
+   connection string comes from the project's dev environment — a
+   `DEV_DATABASE_URL` in `.env`, the output of `supabase status`, the CI
+   workflow — never from a guess:
+
+   ```js
+   const pg = require('pg');
+   const client = new pg.Client(process.env.DEV_DATABASE_URL);
+   await client.connect();
+   ```
+
+   Before `begin`, ask the server what it is and compare against the production
+   identifiers you know:
+
+   ```sql
+   select current_database(), inet_server_addr(), inet_server_port();
+   ```
+
+   A host, project ref or database name that matches production — or that you
+   cannot rule out as production — is the first STOP condition below, now
+   mechanically checkable instead of known out-of-band. Refuse before `begin`,
+   not after.
+
 1. **Name the invariant and record it before touching anything.** One count on
    the table the migration must *not* reach — `entries`, or whatever the change
    claims to leave alone. Step 6 re-reads it after the rollback; without the
@@ -54,9 +77,15 @@ The deliverable is a role × capability matrix for the PR body.
    below. Both die with the transaction.
 
    ```sql
+   -- Supabase variant: `authenticated`, `request.jwt.claim.sub` and
+   -- `auth.uid()` are Supabase's, not Postgres's.
    set local role authenticated;
    select set_config('request.jwt.claim.sub', '<uuid>', true);
    ```
+
+   On plain Postgres the rule is the same, only found instead of known: read
+   each policy's qual from `pg_policies`, find the role it is `to` and the
+   function or setting the qual consults, and `set local` exactly those.
 
    Read the definition first rather than assuming which setting it consults —
    the wrong one silently yields an anonymous session that fails every check for
@@ -175,6 +204,8 @@ failure.
 ## When to STOP
 
 - **The only reachable database is production.** Transactional or not, do not.
+  Step 0's `current_database()` / `inet_server_addr()` check is how you find
+  out — this is never a fact to assume.
 - **The migration is destructive** (`drop`, `truncate`, a narrowing type
   change). Rolling back your probe does not make the migration safe; that needs
   the repo's destructive-op review.

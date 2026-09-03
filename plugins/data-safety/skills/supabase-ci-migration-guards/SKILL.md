@@ -120,12 +120,18 @@ Use `cascade` only if you've confirmed dependents downstream.
 
 ### 6. Smoke-test locally before pushing
 
-Mirror the CI environment exactly:
+Mirror the CI environment exactly — which means reading it first. Open the
+project's CI workflow (`.github/workflows/ci.yml`, or wherever the migration
+job lives) and take the Postgres image tag and the bootstrap role list from
+*it*, substituting them into the commands below. The `postgres:17` and the four
+roles shown are one project's values, kept as a worked example — mirroring this
+snippet instead of that file is how the local smoke test quietly diverges from
+CI:
 
 ```bash
 docker run --rm --name pg-ci -e POSTGRES_PASSWORD=test -p 5432:5432 -d postgres:17
 
-# Bootstrap the same roles CI does — see .github/workflows/ci.yml
+# Bootstrap the same roles CI does — the list comes from the workflow file
 psql "host=localhost user=postgres password=test" -c "
   create role anon;
   create role authenticated;
