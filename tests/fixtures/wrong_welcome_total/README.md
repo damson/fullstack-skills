@@ -1,6 +1,6 @@
 # Fixture marketplace
 
-Welcome! This is a marketplace of **5 skills in 1 themed plugins**: a minimal
+👋 **Welcome!** This is a marketplace of **5 skills in 1 themed plugins**: a minimal
 tree the test suite points the validator at.
 
 | Plugin | Skills | What it is for |
