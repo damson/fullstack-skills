@@ -38,9 +38,13 @@ Where the variant sits differs by framework — last for Roborazzi and Paparazzi
 ### 2. Confirm baselines exist first
 
 ```bash
-BASE=$(find . -type d \( -name screenshots -o -name snapshots -o -name reference \) | head -1)
-[ -n "$BASE" ] && find "$BASE" -name '*.png' | wc -l || echo "no baseline directory"
+BASE=$(find <module-dir> -type d \( -name screenshots -o -name snapshots -o -name reference \))
+[ -n "$BASE" ] && echo "$BASE" | xargs -I{} find {} -name '*.png' | wc -l || echo "no baseline directory"
 ```
+
+Search from the module under test, not the repo root — in a multi-module repo
+a root-wide search finds *some* module's baselines and reports another module's
+count as this one's.
 
 Zero baselines means there is nothing to verify and the run will pass vacuously, or fail for "missing golden" — which is a recording job, not a verification one. Send it to `android-screenshot-baseline-record`.
 
