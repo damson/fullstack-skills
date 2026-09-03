@@ -1,0 +1,10 @@
+{
+  "name": "fixture-marketplace",
+  "plugins": [
+    {
+      "name": "alpha",
+      "description": "A fixture plugin with two skills",
+      "source": "./plugins/alpha"
+    }
+  ]
+}
