@@ -67,6 +67,15 @@ earned it — a test count or a tree identity, cited in the commit.
    inside the submodule and checking out the new SHA there, then staging the
    gitlink.
 
+   The inventory has to come from somewhere outside this checkout: a forge-wide
+   code search for the dead SHA (`gh search code <old-sha> --owner <owner>`),
+   the consumers the upstream repo's own README or release notes name, and
+   whoever asked for the bump. Where none of those is available — no forge
+   search, a private consumer you cannot clone — **the sweep is not complete
+   and must not be reported as complete**: name each unchecked consumer in the
+   commit or PR so the next dead-pin failure is recognised instead of
+   rediscovered.
+
 5. **Run the vendored copy's own test suite at the new pin, from the
    consumer's checkout** — that is the copy that will actually execute, and it
    is what catches a bump to a broken commit before anything depends on it.

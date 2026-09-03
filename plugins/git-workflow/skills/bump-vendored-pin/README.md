@@ -48,9 +48,12 @@ that no longer exists. The skill:
    the other, invisibly, until the stale pin executes. After a history
    rewrite the sweep widens to every consumer repo: each one breaks with the
    same distinctive `upload-pack: not our ref` fetch error, and each pin
-   moves with its own change. When no copy of the old commit survives, the
-   commit message says the range is not diffable and the suite run carries
-   the review.
+   moves with its own change. A dead submodule pin is recovered from inside
+   the submodule — fetch a live branch there, check out the new SHA, stage the
+   gitlink — and consumers the checkout cannot see are found with a forge-wide
+   code search for the old SHA, or reported as unchecked when even that is
+   unavailable. When no copy of the old commit survives, the commit message
+   says the range is not diffable and the suite run carries the review.
 4. Runs the vendored copy's own test suite at the new pin, from the consumer's
    checkout, using whatever the vendored repo's own CI runs.
 5. Commits the pin move alone, evidence in the message: a bump folded into a
