@@ -1,4 +1,4 @@
-# CodeRabbit configuration — https://docs.coderabbit.ai/getting-started/configure-coderabbit
+# CodeRabbit configuration — https://docs.coderabbit.ai/getting-started/yaml-configuration
 # This repo's PRs target `develop` (gitflow), which CodeRabbit skips by default.
 
 language: en-US
