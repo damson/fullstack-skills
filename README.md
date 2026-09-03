@@ -11,7 +11,7 @@ you don't have to win them the hard way too.*
 [![Coverage](https://codecov.io/gh/damson/hard-won-skills/branch/develop/graph/badge.svg)](https://codecov.io/gh/damson/hard-won-skills/branch/develop)
 [![Made for Claude Code](https://img.shields.io/badge/made%20for-Claude%20Code-d97757.svg)](https://claude.com/claude-code)
 
-👋 **Welcome!** This is a marketplace of **31 skills in 5 themed plugins**:
+👋 **Welcome!** This is a marketplace of **33 skills in 5 themed plugins**:
 small, careful procedures your agent picks up automatically when a task calls
 for them: rebasing a stack of PRs without losing one, proving a screenshot test
 actually compared pixels, probing a migration without leaving a trace.
@@ -57,13 +57,13 @@ example; start with any link below.
 
 | Plugin | Skills | What it is for |
 |---|---|---|
-| **[git-workflow](plugins/git-workflow/README.md)** | 12 | Branch, worktree and pull-request hygiene |
+| **[git-workflow](plugins/git-workflow/README.md)** | 13 | Branch, worktree and pull-request hygiene |
 | **[agent-config](plugins/agent-config/README.md)** | 8 | Writing and auditing agent instruction files |
-| **[verification](plugins/verification/README.md)** | 2 | Proving a check can fail before trusting it |
+| **[verification](plugins/verification/README.md)** | 3 | Proving a check can fail before trusting it |
 | **[data-safety](plugins/data-safety/README.md)** | 5 | Writes that are hard to undo |
 | **[mobile-ui](plugins/mobile-ui/README.md)** | 4 | Android / Compose screenshots, Figma components, on-device checks |
 
-Not sure where to begin? **[verification](#verification)** is two skills,
+Not sure where to begin? **[verification](#verification)** is three skills,
 takes a minute to read, and changes how you look at every green checkmark
 you'll ever see again. (And if you only ever install one plugin, that's the
 one we'd hand you.)
@@ -80,7 +80,9 @@ scheduled workflow so its cron actually fires (GitHub registers schedule
 triggers only from the default branch). Two more from one long launch session:
 wait out a PR's checks at a pinned SHA where an empty conclusion counts as
 pending, and land a batch of independent fixes as file-disjoint PRs built by
-parallel agents whose scope fences hold.
+parallel agents whose scope fences hold. And one more: run a release to
+completion rather than to the merge, since the tag, the floating tag and the
+back-merge all fail without turning anything red.
 
 [`branch-hygiene`](plugins/git-workflow/skills/branch-hygiene/README.md) ·
 [`pr-comment-loop`](plugins/git-workflow/skills/pr-comment-loop/README.md) ·
@@ -93,7 +95,8 @@ parallel agents whose scope fences hold.
 [`await-pr-checks`](plugins/git-workflow/skills/await-pr-checks/README.md) ·
 [`parallel-pr-fanout`](plugins/git-workflow/skills/parallel-pr-fanout/README.md) ·
 [`bump-vendored-pin`](plugins/git-workflow/skills/bump-vendored-pin/README.md) ·
-[`wire-scheduled-workflow`](plugins/git-workflow/skills/wire-scheduled-workflow/README.md)
+[`wire-scheduled-workflow`](plugins/git-workflow/skills/wire-scheduled-workflow/README.md) ·
+[`close-the-release-cycle`](plugins/git-workflow/skills/close-the-release-cycle/README.md)
 
 ### agent-config
 
@@ -113,13 +116,15 @@ it, and capture a long session's learnings before compacting.
 
 ### verification
 
-Two skills for the same failure: believing a check that has never been observed
-failing. One makes you break the thing on purpose and watch the check go red;
-the other makes you run a dependency and observe its behaviour instead of
-asserting what its naming implies.
+Three skills for one failure: trusting a signal nobody has checked. One makes
+you break the thing on purpose and watch the check go red; one makes you run a
+dependency and observe its behaviour instead of asserting what its naming
+implies; the third is for the moment a signal and reality disagree, and sends
+you to the authoritative record before you debug work that was never broken.
 
 [`prove-the-check-can-fail`](plugins/verification/skills/prove-the-check-can-fail/README.md) ·
-[`verify-dependency-behaviour`](plugins/verification/skills/verify-dependency-behaviour/README.md)
+[`verify-dependency-behaviour`](plugins/verification/skills/verify-dependency-behaviour/README.md) ·
+[`diagnose-a-lying-signal`](plugins/verification/skills/diagnose-a-lying-signal/README.md)
 
 ### data-safety
 
