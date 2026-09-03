@@ -38,7 +38,8 @@ Confirming a `:library:ui` refactor changed no pixels (Roborazzi):
    skill exists for.
 2. **Confirm baselines exist** — count the PNGs first; zero means this is a
    recording job, not a verification one.
-3. **Run the verify task**, scoped with `--tests` if you mean one class.
+3. **Run the verify task**, scoped with `--tests` if you mean one class —
+   a filter Roborazzi and Paparazzi take but AGP's validate task rejects.
 4. **Confirm comparisons happened** — do not accept the exit code. Roborazzi
    writes `results-summary.json` with `total` / `unchanged` / `changed` /
    `added`; a non-zero `total` matching the tests you expect *is* the
