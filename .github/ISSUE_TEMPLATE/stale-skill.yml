@@ -1,0 +1,36 @@
+name: Report a stale skill
+description: A skill's command errors, its flag vanished, or its assumption no longer holds.
+title: "[stale] "
+labels: ["stale-skill"]
+body:
+  - type: input
+    id: skill
+    attributes:
+      label: Skill
+      description: The skill's name, as it appears in the theme table.
+      placeholder: e.g. rewrite-pr-history
+    validations:
+      required: true
+  - type: textarea
+    id: line
+    attributes:
+      label: The line that no longer holds
+      description: Quote the sentence or command from the skill, verbatim.
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: What you observed instead
+      description: Exit codes and output beat adjectives — paste what the tool actually said.
+      render: shell
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Tool and version
+      description: The tool whose behaviour moved, and its version.
+      placeholder: e.g. gh 2.62.0, git 2.47
+    validations:
+      required: false

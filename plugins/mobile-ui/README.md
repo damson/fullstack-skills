@@ -4,7 +4,7 @@ Android / Compose screenshots, Figma components and on-device checks — four
 skills against the UI test that reports success while testing nothing.
 
 ```bash
-claude plugin install mobile-ui@fullstack-skills --yes
+claude plugin install mobile-ui@hard-won-skills --yes
 ```
 
 Screenshot tooling has a signature failure: the run that compares no pixels

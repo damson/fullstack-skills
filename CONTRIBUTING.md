@@ -2,7 +2,7 @@
 
 Thanks for being here — issues and pull requests are both welcome, and small
 counts. A skill that stopped matching its tool's current behaviour is a bug
-worth [reporting](https://github.com/damson/fullstack-skills/issues/new) even
+worth [reporting](https://github.com/damson/hard-won-skills/issues/new) even
 without a fix. A worked example that makes a skill's README clearer is a real
 contribution. So is a sharper trigger phrase, or a "When to STOP" case you hit
 that a skill missed.
@@ -62,7 +62,7 @@ Run the same two checks CI runs — no token, no network:
 
 ```bash
 ./scripts/validate-skills.sh              # structure of every skill
-python3 scripts/validate-marketplace.py   # manifests, README and plugin pages vs the tree
+python3 scripts/validate-marketplace.py   # manifests, README, plugin pages and relative links vs the tree
 ```
 
 Then the conventions the validators cannot see:
