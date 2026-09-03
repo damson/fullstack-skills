@@ -6,15 +6,13 @@
 # Adapted from agent-config-harness, bin/validate-skills.sh, at commit
 # 232ee14a00902eeacface791103f6236064cdc90. MIT licensed, © 2026 Damien Dagnet.
 #
-# It is vendored rather than pinned as a submodule because that repo is private
-# today and this one is headed for public: a private submodule means fork pull
-# requests, which receive no secrets, could never go green. The four logging
-# helpers it took from the harness's lib/common.sh are inlined below; nothing
-# else was changed except the default root, which walks plugins/*/skills.
+# It stays vendored now that the harness is public for a different reason:
+# contributors get the exact check CI runs with zero extra clones, and CI needs
+# no network fetch beyond its own checkout. The four logging helpers it took
+# from the harness's lib/common.sh are inlined below; nothing else was changed
+# except the default root, which walks plugins/*/skills.
 #
-# When agent-config-harness is public, migration is one line — point
-# VALIDATE_SKILLS at the harness copy in .github/workflows/ci.yml and delete
-# this file. Refresh in the meantime with:
+# Refresh when the harness's copy moves:
 #
 #   diff scripts/validate-skills.sh <harness>/bin/validate-skills.sh
 #

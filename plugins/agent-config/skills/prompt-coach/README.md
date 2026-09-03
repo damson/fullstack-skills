@@ -1,7 +1,7 @@
 # prompt-coach
 
-Scores your prompts on the 4Ds — Delegation, Description, Discernment,
-Diligence — names the weakest dimension, and proposes one rewrite. The goal is
+Scores your prompts on the 4Ds (Delegation, Description, Discernment,
+Diligence), names the weakest dimension, and proposes one rewrite. The goal is
 to make you a more efficient operator over time, not to lecture: one diagnosis,
 one denser rewrite, stop.
 
@@ -47,13 +47,13 @@ what "managed" means, or when to stop.
 > Rebase PRs #3 and #4 onto develop, force-push, and report one line each.
 ```
 
-A rewrite never inflates the word count by more than ~30% — the goal is
+A rewrite never inflates the word count by more than ~30%: the goal is
 denser, not longer. Dimensions that cannot logically apply (a first-turn
 prompt cannot show Discernment) are marked N/A and excluded from averages.
 
 ## Related
 
-- `skill-opportunity-finder` — when Mode B finds a repeated pattern, the full
+- `skill-opportunity-finder`: when Mode B finds a repeated pattern, the full
   skill proposal is deferred to it; prompt-coach only names the candidate.
-- `session-retro` — orchestrates prompt-coach Mode B as one axis of a wider
+- `session-retro`: orchestrates prompt-coach Mode B as one axis of a wider
   end-of-session report.

@@ -4,7 +4,7 @@ Orchestrates three lenses into one end-of-session report: how you prompted
 (`prompt-coach`, Mode B), which repeated patterns deserve to become skills
 (`skill-opportunity-finder`), and whether the project's CLAUDE.md still
 reflects what shipped (`claude-md-management:claude-md-improver`, if
-installed). It is a signal producer only — it applies nothing, and every
+installed). It is a signal producer only: it applies nothing, and every
 section ends with a handoff so you choose what to act on.
 
 Read [SKILL.md](SKILL.md) for the procedure and the exact report shape.
@@ -48,16 +48,16 @@ _Sampled 8 prompts across 31 substantive turns since 10:04._
 Want me to drill into any of these? Apply the CLAUDE.md additions?
 ```
 
-Sub-skill output is preserved verbatim — the sub-skills are the source of
+Sub-skill output is preserved verbatim: the sub-skills are the source of
 truth on their own axis; only the "Suggested next actions" synthesis is the
 orchestrator's. A skipped sub-skill is declared up front, never buried.
 
 ## Related
 
-- `prompt-coach` — axis 1, invoked in Mode B; ships in this plugin.
-- `skill-opportunity-finder` — axis 2; ships in this plugin.
-- `claude-md-management:claude-md-improver` — axis 3; a separate third-party
-  plugin. When it is not installed the axis degrades to a recorded skip — the
+- `prompt-coach`: axis 1, invoked in Mode B; ships in this plugin.
+- `skill-opportunity-finder`: axis 2; ships in this plugin.
+- `claude-md-management:claude-md-improver`: axis 3; a separate third-party
+  plugin. When it is not installed the axis degrades to a recorded skip: the
   retro never fails over it and never inlines an imitation.
-- `save-before-compact` — the applying sibling: run it when you want the
+- `save-before-compact`, the applying sibling: run it when you want the
   learnings written, not just reported.

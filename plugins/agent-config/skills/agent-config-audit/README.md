@@ -1,7 +1,7 @@
 # agent-config-audit
 
 Audits the AI instruction files that are actually loaded for the current
-project — global and project `CLAUDE.md`, `AGENTS.md`, preference files — for
+project (global and project `CLAUDE.md`, `AGENTS.md`, preference files) for
 contradictions, duplication, bloat, and personal rules that leaked into team
 files. The failure it prevents: a config stack that grew by accretion, where two
 files disagree about the same convention and the agent silently obeys whichever
@@ -22,7 +22,7 @@ Ask in any of these shapes:
 
 Three flags narrow or extend a run: `--team` (only the team `AGENTS.md`),
 `--personal` (only personal files), `--fix` (after reporting, propose edits and
-apply each **on approval** — it never batch-applies without asking).
+apply each **on approval**; it never batch-applies without asking).
 
 It reports first, always. Without `--fix` nothing is written.
 
@@ -54,12 +54,12 @@ report looks like:
 
 Symlinked config repos get an extra structural-health check (broken chains,
 copies that should be links); plain files in place are a valid setup, not a
-finding — that check is skipped when no symlinks exist.
+finding; that check is skipped when no symlinks exist.
 
 ## Related
 
-- `claude-md-pointer-check` — the file-shape half: keeps a CLAUDE.md a pointer
+- `claude-md-pointer-check`, the file-shape half: keeps a CLAUDE.md a pointer
   to its sibling rather than a copy; this skill audits the rules inside the
   whole stack.
-- `redundancy-check-before-ship` — the same dedup instinct applied to a single
+- `redundancy-check-before-ship`: the same dedup instinct applied to a single
   diff before it is committed, rather than to the standing stack.

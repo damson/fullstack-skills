@@ -11,7 +11,7 @@ how to reach it.
 
 ## Using it
 
-The skill fires on the *act*, not on a phrase — any time a CLAUDE.md is about
+The skill fires on the *act*, not on a phrase: any time a CLAUDE.md is about
 to be written or reshaped:
 
 - "add a CLAUDE.md to this repo"
@@ -19,9 +19,9 @@ to be written or reshaped:
 - creating a CLAUDE.md as part of scaffolding a new project
 
 It steps aside for typo- and line-level fixes, when there is no sibling to
-point at (greenfield — write normally), when the user explicitly wants a
+point at (greenfield: write normally), when the user explicitly wants a
 standalone file, when the existing CLAUDE.md is already a pointer, when the
-duplication is deliberate — and, resolved before any comparison, when the
+duplication is deliberate; and, resolved before any comparison, when the
 sibling `AGENTS.md` is a symlink to the very CLAUDE.md being edited, which
 makes CLAUDE.md the canonical copy rather than the duplicate.
 
@@ -29,8 +29,8 @@ makes CLAUDE.md the canonical copy rather than the duplicate.
 
 A repo has an `AGENTS.md` with the team's conventions, and the planned
 CLAUDE.md would restate most of them plus two Claude-only rules. The skill
-applies the deletion test per section — would dropping it lose any fact or
-command a sibling does not already state? — finds more than half fail it,
+applies the deletion test per section (would dropping it lose any fact or
+command a sibling does not already state?), finds more than half fail it,
 and rewrites the whole file as:
 
 ```markdown
@@ -48,13 +48,13 @@ git flow. The directives below are Claude-only and don't belong in README.
 
 While there, it also lints the sibling for phrases that read as rules but
 cannot be acted on ("leave it better than you found it", "stay scoped") and
-proposes concrete replacements — asking before touching the sibling, which may
+proposes concrete replacements, asking before touching the sibling, which may
 be team-owned.
 
 ## Related
 
-- `redundancy-check-before-ship` — rule-level dedup across any prose-rule
+- `redundancy-check-before-ship`: rule-level dedup across any prose-rule
   file; this skill owns the CLAUDE.md-vs-sibling file-structure case
   specifically.
-- `agent-config-audit` — audits the whole loaded config stack after the fact;
+- `agent-config-audit`: audits the whole loaded config stack after the fact;
   this skill prevents one class of its findings from being written.
