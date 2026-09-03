@@ -138,9 +138,40 @@ def check_readme():
             problem(f"README.md: '### {plugin.name}' names '{stale}', which is not in the tree")
 
 
+MD_LINK = re.compile(r"!?\[[^\]]*\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
+
+
+def check_links():
+    """Every relative link in every Markdown file points at something real.
+
+    The README web (root → plugin pages → skill pages) holds dozens of relative
+    links; a rename or move strands them with no error anywhere. Only file
+    targets are checked — external URLs and in-page anchors are out of scope.
+    """
+    for md in sorted(ROOT.rglob("*.md")):
+        rel = md.relative_to(ROOT)
+        # Hidden directories hold session tooling, not published docs — except
+        # .github, whose templates are rendered by GitHub like any other page.
+        if any(part.startswith(".") and part != ".github" for part in rel.parts):
+            continue
+        text = md.read_text()
+        # Fenced code, inline code and HTML comments show example links, not
+        # live ones.
+        text = re.sub(r"```.*?```", "", text, flags=re.DOTALL)
+        text = re.sub(r"`[^`\n]*`", "", text)
+        text = re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL)
+        for target in MD_LINK.findall(text):
+            if target.startswith(("http://", "https://", "mailto:", "#")):
+                continue
+            path = target.split("#", 1)[0]
+            if path and not (md.parent / path).exists():
+                problem(f"{rel}: broken relative link → {target}")
+
+
 def main():
     check_manifests()
     check_readme()
+    check_links()
 
     if problems:
         for p in problems:
