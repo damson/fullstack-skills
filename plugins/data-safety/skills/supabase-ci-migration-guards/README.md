@@ -1,7 +1,7 @@
 # supabase-ci-migration-guards
 
 Gets a migration that references Supabase-managed schemas (`auth.*`,
-`storage.*`, `realtime.*`) through a CI that runs vanilla Postgres, where none
+`storage.*`, `realtime.*`, `supabase_functions.*`) through a CI that runs vanilla Postgres, where none
 of those schemas exist. The failure it prevents costs one fix commit and one CI
 cycle each time: `schema "auth" does not exist`, `relation "storage.objects"
 does not exist`, or `cannot change return type of existing function`.
@@ -18,7 +18,8 @@ namespace, and on any of:
 - "vanilla postgres errored on this migration"
 - "schema auth does not exist"
 - a diff in `supabase/migrations/*.sql` referencing `auth.`, `storage.`,
-  `realtime.`, or a `create or replace function` whose signature moved
+  `realtime.`, `supabase_functions.`, or a `create or replace function` whose
+  signature moved
 
 It deliberately does **not** fire when the migration only touches the `public`
 schema with no Supabase-namespace references: there is nothing to guard.

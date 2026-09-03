@@ -32,6 +32,6 @@ Three failures are baked into the template because each cost a real session a
 retry: scratchpad scripts transpile as CJS, so top-level `await` crashes and
 the body lives in `main()`; a forgotten `pool.end()` hangs the process in a
 way that reads as a slow query; and catalog arrays (`name[]`) arrive as the
-literal string `'{a,b}'` unless cast to `text` inside the aggregate, after
-which spreading the "array" silently yields its characters and an empty
-match that looks exactly like "nothing found".
+literal string `'{a,b}'` unless cast to `text` inside the aggregate; spread
+that uncast string and it silently yields its characters and an empty match
+that looks exactly like "nothing found".

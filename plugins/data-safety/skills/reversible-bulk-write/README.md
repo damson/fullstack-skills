@@ -2,7 +2,7 @@
 
 Puts three things in place before a bulk write touches a live datastore: a
 measured invariant that must not move, a dry run of every stage, and a rollback
-written, and schema-checked, while nothing is broken yet. The failure it
+written and schema-checked while nothing is broken yet. The failure it
 prevents is discovering the rollback's typo, or the marker that also matches
 rows you did not create, after the bad data is already live.
 
