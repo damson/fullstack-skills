@@ -57,7 +57,7 @@ example — start with any link below.
 | **[git-workflow](plugins/git-workflow/README.md)** | 10 | Branch, worktree and pull-request hygiene |
 | **[agent-config](plugins/agent-config/README.md)** | 8 | Writing and auditing agent instruction files |
 | **[verification](plugins/verification/README.md)** | 2 | Proving a check can fail before trusting it |
-| **[data-safety](plugins/data-safety/README.md)** | 4 | Writes that are hard to undo |
+| **[data-safety](plugins/data-safety/README.md)** | 5 | Writes that are hard to undo |
 | **[mobile-ui](plugins/mobile-ui/README.md)** | 4 | Android / Compose screenshots, Figma components, on-device checks |
 
 Not sure where to begin? **[verification](#verification)** is two skills,
@@ -116,11 +116,14 @@ asserting what its naming implies.
 ### data-safety
 
 Probe a migration inside a transaction and roll it back, interrogating it as
-each role that will meet it. Make a bulk write reversible before running it.
+each role that will meet it. Answer data questions with a throwaway read-only
+probe instead of a remembered number. Make a bulk write reversible before
+running it.
 Catch the Supabase-managed-schema traps that pass review and fail in production.
 Sweep a repository's full history and its remote before anything goes public.
 
 [`probe-migration-in-transaction`](plugins/data-safety/skills/probe-migration-in-transaction/README.md) ·
+[`read-only-db-probe`](plugins/data-safety/skills/read-only-db-probe/README.md) ·
 [`reversible-bulk-write`](plugins/data-safety/skills/reversible-bulk-write/README.md) ·
 [`supabase-ci-migration-guards`](plugins/data-safety/skills/supabase-ci-migration-guards/README.md) ·
 [`pre-publication-sweep`](plugins/data-safety/skills/pre-publication-sweep/README.md)
