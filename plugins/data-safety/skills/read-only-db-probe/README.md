@@ -12,7 +12,7 @@ how to reach it.
 
 ## Using it
 
-Ask for it in any of these shapes — the skill fires on the intent, not on a
+Ask for it in any of these shapes; the skill fires on the intent, not on a
 command:
 
 - "how many rows would that actually affect?"
@@ -22,7 +22,7 @@ command:
 
 It deliberately does **not** fire for:
 
-- anything that writes, even a single flag — that is `reversible-bulk-write`
+- anything that writes, even a single flag; that is `reversible-bulk-write`
 - a question the repo's own report commands already answer
 - heavy scans against a production-only database
 
@@ -32,6 +32,6 @@ Three failures are baked into the template because each cost a real session a
 retry: scratchpad scripts transpile as CJS, so top-level `await` crashes and
 the body lives in `main()`; a forgotten `pool.end()` hangs the process in a
 way that reads as a slow query; and catalog arrays (`name[]`) arrive as the
-literal string `'{a,b}'` unless cast to `text` inside the aggregate — after
+literal string `'{a,b}'` unless cast to `text` inside the aggregate, after
 which spreading the "array" silently yields its characters and an empty
 match that looks exactly like "nothing found".

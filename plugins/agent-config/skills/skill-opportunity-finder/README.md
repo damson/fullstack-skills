@@ -1,8 +1,8 @@
 # skill-opportunity-finder
 
-Watches a session for the same shape of work happening three or more times —
-repeated corrections, repeated multi-step operations, repeated discovery,
-repeated meta-instructions — and proposes the skills that would have caught
+Watches a session for the same shape of work happening three or more times
+(repeated corrections, repeated multi-step operations, repeated discovery,
+repeated meta-instructions) and proposes the skills that would have caught
 them. The failure it prevents: paying the same instruction tax every session
 because nobody noticed it had become a pattern.
 
@@ -18,8 +18,8 @@ correction or manual operation three or more times. You can also ask:
 - "what am I doing manually?"
 - "where am I repeating myself?"
 
-It stays quiet during the first ~5 turns of a session — patterns need history
-to be observable — and reports "no patterns yet" rather than manufacturing a
+It stays quiet during the first ~5 turns of a session (patterns need history
+to be observable) and reports "no patterns yet" rather than manufacturing a
 candidate. A declined proposal is not re-proposed in the same session, and a
 candidate that duplicates an existing skill is pointed at, not recreated.
 
@@ -59,9 +59,9 @@ your judgement on irreversible decisions.
 
 ## Related
 
-- `prompt-coach` — names a skill candidate from its Mode B pattern analysis
+- `prompt-coach`: names a skill candidate from its Mode B pattern analysis
   and defers the full proposal here.
-- `session-retro` — invokes this skill as one axis of the end-of-session
+- `session-retro`: invokes this skill as one axis of the end-of-session
   report.
-- `save-before-compact` — invokes this skill before compaction, and creates
+- `save-before-compact`: invokes this skill before compaction, and creates
   the approved candidates while the session context still exists.

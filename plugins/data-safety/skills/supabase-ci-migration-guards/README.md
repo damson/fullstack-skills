@@ -1,7 +1,7 @@
 # supabase-ci-migration-guards
 
 Gets a migration that references Supabase-managed schemas (`auth.*`,
-`storage.*`, `realtime.*`) through a CI that runs vanilla Postgres — where none
+`storage.*`, `realtime.*`) through a CI that runs vanilla Postgres, where none
 of those schemas exist. The failure it prevents costs one fix commit and one CI
 cycle each time: `schema "auth" does not exist`, `relation "storage.objects"
 does not exist`, or `cannot change return type of existing function`.
@@ -21,7 +21,7 @@ namespace, and on any of:
   `realtime.`, or a `create or replace function` whose signature moved
 
 It deliberately does **not** fire when the migration only touches the `public`
-schema with no Supabase-namespace references — there is nothing to guard.
+schema with no Supabase-namespace references: there is nothing to guard.
 
 ## Example
 
@@ -47,19 +47,19 @@ end $$;
 
 Vanilla CI applies the table and skips the FK; Supabase environments get the
 real constraint. The same `to_regnamespace` probe wraps policies calling
-`auth.uid()`. Note the order — probing `to_regclass('auth.users')` alone panics
+`auth.uid()`. Note the order: probing `to_regclass('auth.users')` alone panics
 when the whole schema is missing, so the namespace check comes first.
 
 A two-line header comment explains *why* the column is unconstrained;
 otherwise a future maintainer "helpfully" tightens it and breaks CI again. And
 before pushing, the whole chain is smoke-tested locally against a Postgres
 container whose image tag and bootstrapped roles are read from the CI workflow
-itself — about 30 seconds.
+itself: about 30 seconds.
 
 ## Related
 
-- `probe-migration-in-transaction` (this plugin) — this skill gets the
+- `probe-migration-in-transaction` (this plugin): this skill gets the
   migration to *apply* everywhere; that one proves what it *does*.
-- `prove-the-check-can-fail` (verification plugin) — the local smoke-test is
+- `prove-the-check-can-fail` (verification plugin): the local smoke-test is
   only trustworthy because it mirrors CI exactly; same discipline of running
   the real check, not a lookalike.

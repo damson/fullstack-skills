@@ -1,7 +1,7 @@
 # redundancy-check-before-ship
 
-Runs before committing an addition to any prose-rule file — CLAUDE.md,
-AGENTS.md, a docs/ page, a README, a PR template — and greps each added rule
+Runs before committing an addition to any prose-rule file (CLAUDE.md,
+AGENTS.md, a docs/ page, a README, a PR template) and greps each added rule
 against the docs a reader already has loaded. The failure it prevents: prose
 rules duplicating silently, because the author remembers writing the sentence
 but not that the repo already states it somewhere else.
@@ -42,13 +42,13 @@ File delta after pruning: +4 lines instead of +14
 Two judgement calls it encodes: a rule may legitimately live in an always-
 loaded entry-point file *and* a reference doc (different distances from use),
 and relocation is only worth it when the destination already has a section on
-the subject — otherwise drop the block. If a file claims to be portable, the
-added rule is also checked for hardcoded repo names, tools and paths — the most
+the subject; otherwise drop the block. If a file claims to be portable, the
+added rule is also checked for hardcoded repo names, tools and paths, the most
 common portability leak.
 
 ## Related
 
-- `claude-md-pointer-check` — the file-shape rewrite for CLAUDE.md
+- `claude-md-pointer-check`: the file-shape rewrite for CLAUDE.md
   specifically; this skill is per-rule and works on any prose file.
-- `agent-config-audit` — finds the same duplication after it shipped; this
+- `agent-config-audit`: finds the same duplication after it shipped; this
   skill is the gate that keeps it from shipping.

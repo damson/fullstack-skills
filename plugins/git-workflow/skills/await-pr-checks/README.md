@@ -16,7 +16,7 @@ afternoon:
 - a watcher started right after a push read the **previous run's** terminal
   state, because the new run had not registered yet;
 - a loop that exited when "nothing is pending" could not say **whether it
-  exited green or red** — and the report inherited the shrug.
+  exited green or red**, and the report inherited the shrug.
 
 The fix is not a cleverer one-liner. It is pinning the SHA before watching,
 enumerating the checks you expect, treating empties as pending, and never

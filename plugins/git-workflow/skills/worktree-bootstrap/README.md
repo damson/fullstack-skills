@@ -27,12 +27,12 @@ credential files and hooks), and when the worktree has already run once.
 
 A new worktree of a pnpm app dies on startup with a missing env var. The skill:
 
-1. Detects the stack from the lockfile — `pnpm-lock.yaml` → pnpm, so the
+1. Detects the stack from the lockfile: `pnpm-lock.yaml` → pnpm, so the
    install is `pnpm install`, never `npm install`, which would rewrite the
    lockfile.
 2. Finds a donor worktree of the same repo (machine-local config is
    per-machine, not per-branch).
-3. Lists the donor's gitignored files — with `--ignored`, because the default
+3. Lists the donor's gitignored files, with `--ignored`, because the default
    listing *hides* exactly the files that need to come across:
 
    ```bash
@@ -45,14 +45,14 @@ A new worktree of a pnpm app dies on startup with a missing env var. The skill:
 4. Installs dependencies, populates submodules if `.gitmodules` exists, and
    runs any `postinstall` / `generate` / `prisma generate` step the repo
    actually declares.
-5. Verifies with the cheapest command that exercises real config — `pnpm
+5. Verifies with the cheapest command that exercises real config: `pnpm
    typecheck`, or `./gradlew help -q` on Android, which proves
    `local.properties` resolves. A green install is not proof; the app reading
    its env is.
 
 ## Related
 
-- `capture-pr-screenshots` — its pre-flight linking of env files into a
+- `capture-pr-screenshots`: its pre-flight linking of env files into a
   secondary worktree is this skill's problem in miniature.
-- `branch-hygiene` — creates the temporary worktrees this skill may then need
+- `branch-hygiene`: creates the temporary worktrees this skill may then need
   to make runnable.
