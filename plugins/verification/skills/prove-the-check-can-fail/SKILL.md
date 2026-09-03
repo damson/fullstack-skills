@@ -32,15 +32,18 @@ command pass?", this one asks "would it have caught the bug?".
 3. **Run the check the way CI runs it.** Same task, same flags — lifted from the
    workflow YAML or pipeline config, not reconstructed from memory. Then read the
    output.
-   - **Still green → the check is inert.** Stop. This is the finding, and it matters
-     more than whatever you were originally doing. Find out why before continuing —
-     start with: did the runner collect the test at all (compare the reported test
-     count), does the task's name, filter or file pattern actually select it, and
-     is the file you mutated the one the run reads.
+   - **Still green → suspect the check is inert.** Before concluding, rule out the
+     innocent causes: a cached pass (next bullet), a task name, filter or file
+     pattern that never selected the check, and a mutated file the run does not
+     read — compare the reported test count for a test; for a lint or scan step,
+     compare the files-scanned count or echo the input list. Only when those hold
+     is the check inert. Stop there: that finding matters more than whatever you
+     were originally doing.
    - **Suspiciously fast → suspect caching.** A build tool reporting success in under
      a second usually skipped the work. Re-run with `--rerun-tasks` (Gradle),
-     `--no-cache` (jest), `--force` (cargo) or the equivalent. **A cached pass is not
-     a pass**, and a cached pass during this step invalidates the whole experiment.
+     `--no-cache` (jest), a preceding `cargo clean` (cargo has no force flag) or
+     the equivalent. **A cached pass is not a pass**, and a cached pass during
+     this step invalidates the whole experiment.
    - Confirm the failure message actually names the defect you introduced. A check
      failing for an unrelated reason has still not been validated.
 
