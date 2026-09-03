@@ -1,0 +1,48 @@
+# CodeRabbit configuration — https://docs.coderabbit.ai/getting-started/yaml-configuration
+# This repo's PRs target `develop` (gitflow), which CodeRabbit skips by default.
+
+language: en-US
+
+reviews:
+  profile: assertive
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  auto_review:
+    enabled: true
+    base_branches:
+      - develop
+  path_instructions:
+    - path: "plugins/**/SKILL.md"
+      instructions: |
+        A skill's frontmatter `name` must match its folder name exactly, and its
+        `description` must say when to fire AND when not to. The file must keep a
+        `## Procedure` (or `## Step N`) section and a `## When to STOP` section.
+        Flag steps an agent cannot execute as written (missing command, undefined
+        variable, tool assumed without a degrade path), repo-specific paths or
+        assumptions (skills must be portable), and references to skills in other
+        plugins that would break when that plugin is not installed — those must
+        read as soft references.
+    - path: "plugins/**/README.md"
+      instructions: |
+        The human-facing half of a skill: what it produces, the failure it
+        prevents, trigger phrases, one worked example grounded in the skill's own
+        commands. Flag claims that the sibling SKILL.md does not actually make.
+    - path: "README.md"
+      instructions: |
+        Bookkeeping travels with the change: a skill added, removed or renamed
+        must update the theme table row count, the plugin section's skill list,
+        and the welcome line's total, all in the same PR. Flag counts that
+        contradict the tree.
+    - path: "plugins/*/.claude-plugin/plugin.json"
+      instructions: |
+        A material skill change bumps the MINOR version in the same PR; the
+        release workflow owns the PATCH field, so flag any PR that pre-applies a
+        patch bump.
+    - path: "scripts/**"
+      instructions: |
+        Validators must stay standard-library / no-network — they run on a fresh
+        CI runner with no pip step. Any new check should be provable-to-fail:
+        prefer checks the PR author can break on purpose and watch go red.
+chat:
+  auto_reply: true
