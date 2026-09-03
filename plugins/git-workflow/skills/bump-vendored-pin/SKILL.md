@@ -46,13 +46,26 @@ earned it — a test count or a tree identity, cited in the commit.
    `git rev-parse <old>^{tree} <new>^{tree}`. Identical trees mean the rewrite
    changed commit identity only — cite the tree hash as the review evidence.
    Different trees mean the rewrite smuggled in content; diff it before
-   trusting it.
+   trusting it. When no copy of `<old>` survives anywhere, the tree proof is
+   unavailable — state that in the commit ("range not diffable: the old
+   commit no longer exists upstream") and let step 5's suite run carry the
+   whole review burden.
 
 4. **Find every pin, not just the one you came for.** Gitlinks
    (`git submodule status`), action defaults, refs in workflows and config:
    `grep -rn <old-sha>` across the repo. A repo that pins in two places
    updates one and drifts in the other, and the drift is invisible until the
    stale pin executes.
+
+   An upstream rewrite also widens the blast radius beyond one repo: every
+   consumer pinning the dead SHA breaks identically, and the signature is
+   distinctive — `fatal: remote error: upload-pack: not our ref <sha>` on
+   fetch, or `git submodule update --init` dying with it in a fresh
+   checkout. Enumerate the consumers (action input defaults, sibling repos'
+   gitlinks, workflow refs) and move each pin with its own change. For a
+   submodule whose recorded SHA is dead, recover by fetching a live branch
+   inside the submodule and checking out the new SHA there, then staging the
+   gitlink.
 
 5. **Run the vendored copy's own test suite at the new pin, from the
    consumer's checkout** — that is the copy that will actually execute, and it

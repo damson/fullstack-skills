@@ -45,7 +45,12 @@ that no longer exists. The skill:
    content; diff it before trusting it.
 3. Finds every pin, not just the one it came for (`grep -rn <old-sha>` across
    the repo), because a repo that pins in two places updates one and drifts in
-   the other, invisibly, until the stale pin executes.
+   the other, invisibly, until the stale pin executes. After a history
+   rewrite the sweep widens to every consumer repo: each one breaks with the
+   same distinctive `upload-pack: not our ref` fetch error, and each pin
+   moves with its own change. When no copy of the old commit survives, the
+   commit message says the range is not diffable and the suite run carries
+   the review.
 4. Runs the vendored copy's own test suite at the new pin, from the consumer's
    checkout, using whatever the vendored repo's own CI runs.
 5. Commits the pin move alone, evidence in the message: a bump folded into a
