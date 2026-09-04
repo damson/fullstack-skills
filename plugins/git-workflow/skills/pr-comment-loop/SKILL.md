@@ -76,7 +76,22 @@ For each open PR you have touched in this session — OR all open PRs in the cur
    **last-edit time**, `jq -r '.[0].updated_at' <<<"$mine"` — creation time never
    advances once the sticky is edited in place.
 
-3. **Verify each finding against the source, then classify it.** Before acting on a finding, open the cited `file:line` in the actual source. Cold-read reviewers see the diff without surrounding context and are confidently wrong often enough that applying findings unchecked introduces bugs — the classic misses: a "missing" guard that exists just outside the hunk, a demanded convention the repo doesn't have, a finding re-raised rounds after it was applied. A finding that does not survive that check is 🚫 Skipped, never silenced — the step 6 table owns the rationale rules.
+3. **Verify each finding against the source, then classify it.** Start by
+   dropping the ones that are not current: a comment whose `.line` is `null` is
+   pinned to a commit the branch has moved past, and on a branch that already
+   answered a round, most of those were fixed by the commits that answered it.
+
+   ```bash
+   gh api "repos/<owner>/<repo>/pulls/<n>/comments" \
+     --jq '.[] | select(.line == null) | {path, was: .original_line, at: .original_commit_id[0:7]}'
+   ```
+
+   Stale means the line moved, not that the defect is gone, so read the current
+   file before dismissing one — but this routinely turns an alarming count into
+   none, and re-fixing what is already fixed is how a round produces a diff that
+   changes nothing.
+
+   Then, for what remains, open the cited `file:line` in the actual source. Cold-read reviewers see the diff without surrounding context and are confidently wrong often enough that applying findings unchecked introduces bugs — the classic misses: a "missing" guard that exists just outside the hunk, a demanded convention the repo doesn't have, a finding re-raised rounds after it was applied. A finding that does not survive that check is 🚫 Skipped, never silenced — the step 6 table owns the rationale rules.
 
    Then parse the comment body (`.comments[].body` and `.reviews[].body` from the JSON above) for emoji headings `🔴 Critical`, `🟡 Should fix`, `🟢 Nice to have`; a finding that is pure praise or explicitly requires no action classifies as 💬 Acknowledgement. If the reviewer doesn't use that emoji convention, split the comment into its distinct findings yourself and classify each by the same rules — praise is still 💬, everything actionable defaults to 🟡 — marking each classification as assumed in the reply table so the user can re-grade.
 
