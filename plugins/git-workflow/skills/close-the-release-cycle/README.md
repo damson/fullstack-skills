@@ -60,3 +60,14 @@ Branches level, tag targets the release commit. Cycle closed.
 It will not merge a promotion in a repo whose policy reserves that for a human,
 will not produce an empty release when the branches are already identical, and
 will not re-tag a commit that is already a release point.
+
+## Related
+
+- `wire-scheduled-workflow` (this plugin): the cron that starts this cycle is
+  only armed from the default branch, which is its own silent failure.
+- `merge-on-go-ahead` (this plugin): the ordinary feature merge, which stops at
+  the merge because nothing follows it.
+- `bump-vendored-pin` (this plugin): the other place a tag is the thing being
+  moved, with the evidence that earned it.
+- `prove-the-check-can-fail` (verification plugin, if installed): the habit
+  behind every "and prove each one happened" in this procedure.
