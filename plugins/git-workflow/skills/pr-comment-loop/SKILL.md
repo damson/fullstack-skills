@@ -48,7 +48,9 @@ For each open PR you have touched in this session — OR all open PRs in the cur
 
 1. **Snapshot state**:
    ```bash
-   gh pr view <n> --json mergeable,mergeStateStatus,statusCheckRollup,comments,baseRefName
+   # reviews as well as comments: `--json` returns only what it is asked for,
+   # and step 3 reads `.reviews[].body`, where a review's own findings live
+   gh pr view <n> --json mergeable,mergeStateStatus,statusCheckRollup,comments,reviews,baseRefName
    ```
 
 2. **Identify NEW comments** since your last reply on that PR. Your last reply is
@@ -98,9 +100,6 @@ For each open PR you have touched in this session — OR all open PRs in the cur
    gh pr view <n> --json mergeable,mergeStateStatus
    # confirm CLEAN before reporting back
    ```
-
-   Note the number of tests the suite reports on this run; the STOP list below
-   compares it against the previous one, and nothing else captures it.
 
 6. **Post a reply comment on the PR.** The audit trail of "comment seen, classified, addressed" must live on GitHub — a reply in the Claude session does NOT count. Use sticky-comment style (`<!-- claude-review-response -->` marker → upsert) so re-runs don't spam the PR — **one comment per PR, edited in place across rounds, never a new one each round.**
 
@@ -183,5 +182,9 @@ For each open PR you have touched in this session — OR all open PRs in the cur
 - An 🔴 finding's fix is non-trivial AND ambiguous (would require a design call).
 - A finding contradicts an earlier decision in the session — surface the contradiction before re-litigating.
 - All CI checks are red and root cause isn't obvious — don't push speculative fixes.
-- Test count drops vs the previous push — surface this before continuing.
+- A check that was green in the previous round's step 1 snapshot is red in this
+  one — your own fix caused it; surface it before continuing.
+- A fix you applied deletes or skips a test — say so and stop, whatever the
+  finding claimed. A reviewer asking for less coverage is a finding to argue
+  with, not to apply.
 - Never close or merge the PR from this skill — that is always the user's call.
