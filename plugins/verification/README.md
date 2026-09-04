@@ -1,7 +1,7 @@
 # verification
 
-Two skills for the same failure: believing something that has never been
-observed doing what it claims.
+Three skills for the same failure: believing something that has never been
+observed doing what it claims, or a summary of it that nobody checked.
 
 ```bash
 claude plugin install verification@hard-won-skills --yes
@@ -24,6 +24,7 @@ changes how you read every green checkmark that follows.
 |---|---|
 | [`prove-the-check-can-fail`](skills/prove-the-check-can-fail/README.md) | Introduce the defect the check exists to catch, watch it go red, restore, report both halves, before trusting or citing it |
 | [`verify-dependency-behaviour`](skills/verify-dependency-behaviour/README.md) | When docs are absent and naming is suggestive: read the artifact that actually runs, and quote the constant, not the conclusion |
+| [`diagnose-a-lying-signal`](skills/diagnose-a-lying-signal/README.md) | When a check, badge or exit code disagrees with reality: read the authoritative record before debugging work that was never broken |
 
 Each skill's README carries its triggers and a worked example; the `SKILL.md`
 beside it is the procedure the agent follows.
