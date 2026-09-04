@@ -29,6 +29,7 @@ the scars: each skill knows not just what to do, but when to stop and ask.
 [verification](#verification) · [data-safety](#data-safety) ·
 [mobile-ui](#mobile-ui)) ·
 [What a skill looks like](#-what-a-skill-here-looks-like) ·
+[The harness](#-the-harness-behind-these-skills) ·
 [Contributing](#-contributing) ·
 [Releases](#-releases)
 
@@ -171,6 +172,37 @@ Skills are written to be **portable**: none names a path from the repo it came
 from, or assumes a folder layout. Where one can take advantage of tooling you
 may not have, it says so and degrades instead of failing.
 
+## 🔬 The harness behind these skills
+
+These were extracted while building
+**[agent-config-harness](https://github.com/damson/agent-config-harness)**:
+agent instruction files, scored and regression-tested like code. If this
+marketplace is the habits, that repo is the bench they were measured on, and
+`scripts/validate-skills.sh` here is vendored straight from it.
+
+It asks the question a `CLAUDE.md` rarely gets asked: when did you last measure
+it? Config files are graded one to five on clarity, conciseness, completeness,
+consistency and actionability, out of 25 with a letter grade and named
+findings, recorded per domain over time so an improvement is distinguishable
+from a rewrite that merely felt productive. A `bats` suite covers the
+structural invariants a rubric cannot see, including the skill layout this
+marketplace's own CI enforces.
+
+It is also a GitHub Action, so a build fails when config quality slips below a
+grade you choose:
+
+```yaml
+- uses: damson/agent-config-harness@v1
+  env:
+    ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+  with:
+    files: CLAUDE.md
+    fail-below: C
+```
+
+Seeing what a grade looks like costs no API key: two real eval runs ship in the
+repo, the same config one edit apart, 24/25 and 13/25.
+
 ## 🤝 Contributing
 
 Found a rough edge? That's exactly the kind of thing this repo is made of: a
@@ -191,11 +223,5 @@ A workflow promotes one to the other every three days, but only when there is
 something to promote and the CI suite passes: plugins that changed get a patch
 bump, the marketplace gets a CalVer tag. Gates, couplings and how to hold a
 release: [docs/releases.md](docs/releases.md).
-
-## 🔗 Related
-
-The engine these were extracted from (a domain registry, an LLM rubric that
-scores config quality, and a `bats` suite that enforces skill structure) lives
-separately in `agent-config-harness`.
 
 [MIT licensed](LICENSE). Use them, fork them, make them yours.
