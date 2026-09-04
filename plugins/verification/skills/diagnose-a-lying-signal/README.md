@@ -63,3 +63,12 @@ Two separate findings: the badge is pointed at a branch nothing uploads to
 (a display bug, one line), and the release branch genuinely has no coverage
 data (a pipeline decision, yours to make).
 ```
+
+## Related
+
+- `prove-the-check-can-fail` (this plugin): the other half of the same
+  suspicion, applied before trusting a check rather than after doubting it.
+- `verify-dependency-behaviour` (this plugin): when the disagreement is with a
+  library's documented behaviour rather than with a reported status.
+- `await-pr-checks` (git-workflow plugin, if installed): the specific case of a
+  check that reads settled while its run is still going.
