@@ -91,7 +91,7 @@ Check `package.json` scripts (or the Makefile / `pyproject.toml`) for a `postins
 
 Run the cheapest command that exercises real config + deps, not just a lockfile check:
 
-- Node app: with the package manager step 1 detected — or, lacking a lockfile, the `packageManager` field in `package.json`, else npm — run the first of `typecheck` / `build` that actually exists under `scripts` (read it; a guessed script name fails as "missing script", not as a real verdict). If the change is runtime-facing, start the dev server bounded (`timeout 30 <pm> run dev` or kill after the first successful response) — never leave it running.
+- Node app: with the package manager step 1 detected — or, lacking a lockfile, the `packageManager` field in `package.json`, else npm — run the first of `typecheck` / `build` that actually exists under `scripts` (read it; a guessed script name fails as "missing script", not as a real verdict). If the change is runtime-facing, start the dev server bounded and never leave it running. `timeout` is GNU coreutils and a stock macOS does not have it, so bound it with the shell instead: `<pm> run dev & pid=$!`, poll the URL until it answers or a counted loop runs out (`for _ in $(seq 1 30); do curl -sf <url> >/dev/null && break; sleep 1; done`), then `kill "$pid"`.
 - Python: `pytest -q` or `python -m <package> --help`.
 - Android/Gradle: `./gradlew help -q` — the cheapest full configure; it proves `local.properties` resolves — then the module's build/test task.
 - General: the repo's documented smoke command.

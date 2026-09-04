@@ -131,8 +131,14 @@ CI:
 ```bash
 docker run --rm --name pg-ci -e POSTGRES_PASSWORD=test -p 5432:5432 -d postgres:17
 
-# -d returns before Postgres accepts connections — wait, bounded
-timeout 30 sh -c 'until docker exec pg-ci pg_isready -U postgres >/dev/null 2>&1; do sleep 1; done'
+# -d returns before Postgres accepts connections — wait, bounded. `timeout` is
+# GNU coreutils and is absent from a stock macOS, where this smoke test runs
+# most often, so the bound is a counted loop and the failure is explicit.
+for _ in $(seq 1 30); do
+  docker exec pg-ci pg_isready -U postgres >/dev/null 2>&1 && break
+  sleep 1
+done
+docker exec pg-ci pg_isready -U postgres || { echo "postgres never accepted connections"; exit 1; }
 
 # Bootstrap the same roles CI does — the list comes from the workflow file
 psql "host=localhost user=postgres password=test" -c "
