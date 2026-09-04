@@ -51,7 +51,9 @@ refuses to call it done on a signal that has not been checked.
    `status: identical`, or a files count of zero, means the release is empty:
    stop and say so.
 
-3. **Merge the promotion with a merge commit, never a squash.** A squashed
+3. **Merge the promotion, if step 1 said you may** — where the policy reserves
+   that for a human, stop at a green PR and hand it over. **With a merge commit,
+   never a squash.** A squashed
    promotion puts a commit on the release branch that the integration branch
    holds no ancestor of. Trees still match, so nothing looks wrong until the
    *next* promotion opens as `CONFLICTING`, in a PR that has nothing to do with
@@ -96,7 +98,10 @@ refuses to call it done on a signal that has not been checked.
    while the release page says otherwise.
 
    ```bash
-   sha=$(gh api repos/<owner>/<repo>/git/ref/tags/<vX.Y.Z> --jq .object.sha)
+   # /commits/<ref> resolves a tag to its COMMIT. Reading the ref instead gives
+   # the tag object's own sha whenever the release tag is annotated, and the
+   # floating tag would then be repointed at a tag object rather than the commit
+   sha=$(gh api repos/<owner>/<repo>/commits/<vX.Y.Z> --jq .sha)
    gh api -X PATCH repos/<owner>/<repo>/git/refs/tags/<vX> -f sha="$sha" -F force=true
    ```
 
@@ -110,14 +115,20 @@ refuses to call it done on a signal that has not been checked.
    gh pr merge <n> --merge          # after its checks pass
    ```
 
-7. **Prove the cycle closed** rather than assuming it. Three checks, and each
-   one has caught a real omission:
+7. **Prove the cycle closed** rather than assuming it. Each of these has caught
+   a real omission:
 
    ```bash
    # expect identical or ahead; behind or diverged means the back-merge did not land
    gh api repos/<owner>/<repo>/compare/<main>...<develop> --jq .status
    gh release view <vX.Y.Z> --json tagName,targetCommitish
-   gh api repos/<owner>/<repo>/git/ref/tags/<vX> --jq .object.sha       # == the release sha
+
+   # both of these are the commit, for an annotated tag as well as a lightweight
+   # one, and they have to match; comparing against the tag REF instead reports a
+   # mismatch on a cycle that closed perfectly, which is the whole failure this
+   # skill exists to name
+   gh api repos/<owner>/<repo>/commits/<vX> --jq .sha
+   gh api repos/<owner>/<repo>/git/ref/heads/<main> --jq .object.sha
    ```
 
 8. **Update whatever pins this release.** Find the consumers rather than
