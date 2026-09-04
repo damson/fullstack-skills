@@ -11,7 +11,7 @@ you don't have to win them the hard way too.*
 [![Coverage](https://codecov.io/gh/damson/hard-won-skills/branch/develop/graph/badge.svg)](https://codecov.io/gh/damson/hard-won-skills/branch/develop)
 [![Made for Claude Code](https://img.shields.io/badge/made%20for-Claude%20Code-d97757.svg)](https://claude.com/claude-code)
 
-👋 **Welcome!** This is a marketplace of **33 skills in 5 themed plugins**:
+👋 **Welcome!** This is a marketplace of **34 skills in 5 themed plugins**:
 small, careful procedures your agent picks up automatically when a task calls
 for them: rebasing a stack of PRs without losing one, proving a screenshot test
 actually compared pixels, probing a migration without leaving a trace.
@@ -58,7 +58,7 @@ example; start with any link below.
 
 | Plugin | Skills | What it is for |
 |---|---|---|
-| **[git-workflow](plugins/git-workflow/README.md)** | 13 | Branch, worktree and pull-request hygiene |
+| **[git-workflow](plugins/git-workflow/README.md)** | 14 | Branch, worktree and pull-request hygiene |
 | **[agent-config](plugins/agent-config/README.md)** | 8 | Writing and auditing agent instruction files |
 | **[verification](plugins/verification/README.md)** | 3 | Proving a check can fail before trusting it |
 | **[data-safety](plugins/data-safety/README.md)** | 5 | Writes that are hard to undo |
@@ -83,7 +83,9 @@ wait out a PR's checks at a pinned SHA where an empty conclusion counts as
 pending, and land a batch of independent fixes as file-disjoint PRs built by
 parallel agents whose scope fences hold. And one more: run a release to
 completion rather than to the merge, since the tag, the floating tag and the
-back-merge all fail without turning anything red.
+back-merge all fail without turning anything red. And the step every one of
+those stops short of: press the merge button itself, once the go-ahead is
+confirmed to still cover this pull request at this commit.
 
 [`branch-hygiene`](plugins/git-workflow/skills/branch-hygiene/README.md) ·
 [`pr-comment-loop`](plugins/git-workflow/skills/pr-comment-loop/README.md) ·
@@ -97,7 +99,8 @@ back-merge all fail without turning anything red.
 [`parallel-pr-fanout`](plugins/git-workflow/skills/parallel-pr-fanout/README.md) ·
 [`bump-vendored-pin`](plugins/git-workflow/skills/bump-vendored-pin/README.md) ·
 [`wire-scheduled-workflow`](plugins/git-workflow/skills/wire-scheduled-workflow/README.md) ·
-[`close-the-release-cycle`](plugins/git-workflow/skills/close-the-release-cycle/README.md)
+[`close-the-release-cycle`](plugins/git-workflow/skills/close-the-release-cycle/README.md) ·
+[`merge-on-go-ahead`](plugins/git-workflow/skills/merge-on-go-ahead/README.md)
 
 ### agent-config
 
