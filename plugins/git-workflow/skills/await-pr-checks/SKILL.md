@@ -6,7 +6,10 @@ description: >
   a PR's check state after any push, including one this session made. Also fire
   when a wait loop is about to be written with `gh pr view`/`gh run list` in
   it. Goal — a terminal verdict per named check, never a report that mistook
-  silence, an empty field, or the previous run for an answer.
+  silence, an empty field, or the previous run for an answer. Do NOT fire to
+  merge on the result (green authorises reporting, not merging: that is
+  `merge-on-go-ahead`), to diagnose a check that has already reported red (read
+  its log), or for a run with no pull request behind it.
 ---
 
 # Await PR checks
