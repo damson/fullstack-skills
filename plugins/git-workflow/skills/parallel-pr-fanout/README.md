@@ -23,17 +23,18 @@ separate concern; this skill is only the PR-batch discipline on top.
 
 ## Using it
 
-It fires when a batch of independent changes is about to become one pull
-request, or one agent's serial afternoon:
+It fires when three or more independent changes should land as separate,
+reviewable pull requests:
 
-- "fix all of these"
-- "work through the audit findings"
-- "split this into PRs and open them"
-- a review or an eval that produced a list of defects across several areas
+- "address all of these"
+- "fix everything on the list"
+- "make as much parallel work as possible"
+- a review or an eval that produced many unrelated fixes
 
-It does not fire for a single change, for work whose parts depend on each
-other, or as a way to parallelise something nobody has partitioned yet: the
-partition is the skill, the agents are just what runs it.
+It does not fire for coupled changes, which are one pull request; for
+sequential work, which is a stack; or for parallelism that produces no pull
+requests, which is plain agent dispatch. The partition is the skill, and the
+agents are only what runs it.
 
 ## Example
 
@@ -47,12 +48,14 @@ plus the facts the agent cannot discover: which conventions the repository
 enforces, what has already been ruled out, and that no attribution footer or
 session link goes in a commit or a pull request body.
 
-Five pull requests come back, one per plugin. The fence is checked before
-each push (`git diff --name-only origin/<base>...HEAD`, compared against the
-agent's allowed set) and every one comes back clean, so the five merge in any
-order without a conflict. Findings outside an agent's tree arrive as flagged
-follow-ups in the pull request body rather than as surprise diffs, which is
-what keeps the partition honest under pressure.
+Five pull requests come back, one per plugin. The fence is checked before each
+push (`git diff --name-only origin/<base>...HEAD`, compared against the agent's
+allowed set) and every one comes back clean. Disjoint files are necessary but
+not sufficient, so the couplings that share no path are checked too, a
+generated file and its source, a producer and its consumer, a migration; with
+those clear, the five merge in any order. Findings outside an agent's tree
+arrive as flagged follow-ups in the pull request body rather than as surprise
+diffs, which is what keeps the partition honest under pressure.
 
 ## Related
 

@@ -41,6 +41,8 @@ A pull request opened two minutes ago, read the moment the rollup is
 available:
 
 ```console
+$ gh pr view <n> --json statusCheckRollup \
+    -q '[.statusCheckRollup[] | "\(.name // .context)=\(.conclusion // .state)"]'
 ["validate=", "CodeRabbit=PENDING"]
 ```
 
@@ -50,9 +52,11 @@ to exclude the words `PENDING` and `IN_PROGRESS`. A loop built that way reports
 the pull request settled while its only real check is still running.
 
 Judged properly, both entries are pending and the wait continues. Four minutes
-later the same read is terminal, and only then is there a verdict to quote:
+later the same command is terminal, and only then is there a verdict to quote:
 
 ```console
+$ gh pr view <n> --json statusCheckRollup \
+    -q '[.statusCheckRollup[] | "\(.name // .context)=\(.conclusion // .state)"]'
 ["validate=SUCCESS", "CodeRabbit=SUCCESS", "codecov/patch=SUCCESS", "codecov/project=SUCCESS"]
 ```
 
