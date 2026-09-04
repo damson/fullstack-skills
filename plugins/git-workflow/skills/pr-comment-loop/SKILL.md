@@ -72,9 +72,10 @@ For each open PR you have touched in this session — OR all open PRs in the cur
    - **Exclude the reviewer's own account** from the candidate set, identified by author login, so the filter can only ever select your own comment.
    - **Count the matches here, not in step 6.** Zero is no sticky yet, so every comment is new; one is the sticky; more than one stops the loop and is surfaced to the user. Counting later lets the loop classify, edit and push before it aborts, and overwriting the wrong comment raises no error.
 
-   With exactly one, compare each comment's `createdAt` against the sticky's
-   **last-edit time**, `jq -r '.[0].updated_at' <<<"$mine"` — creation time never
-   advances once the sticky is edited in place.
+   With exactly one, read the sticky's **last-edit time**, `jq -r '.[0].updated_at'
+   <<<"$mine"`: creation time never advances once the sticky is edited in place,
+   so the edit time is when you last answered. **A comment created after it is
+   new and gets a row this round; one created before it was answered already.**
 
 3. **Verify each finding against the source, then classify it.** Start by
    dropping the ones that are not current: a comment whose `.line` is `null` is
@@ -162,7 +163,7 @@ For each open PR you have touched in this session — OR all open PRs in the cur
    Pushed as `<sha>`.
    ```
 
-   Post via `gh pr comment <n> --body "$(cat <<'EOF' ... EOF)"`. Even when every finding is 🚫 Skipped with no code change, still post the reply.
+   Write the body to `reply.md` and post it with the upsert above, never with a bare `gh pr comment`: that creates a second comment every round, which is the thing this whole step exists to prevent. Even when every finding is 🚫 Skipped with no code change, still post the reply.
 
    ### Recovering a clobbered comment
 
