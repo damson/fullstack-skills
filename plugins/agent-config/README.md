@@ -29,6 +29,7 @@ consent-gated: they evaluate *you*, so they never fire unsolicited.
 | [`prompt-coach`](skills/prompt-coach/README.md) | Score your prompts on the 4Ds and propose one denser rewrite (on request only) |
 | [`save-before-compact`](skills/save-before-compact/README.md) | Before compacting a long session: route each learning to its right home, per-item approved, then write a resume brief |
 | [`session-retro`](skills/session-retro/README.md) | One end-of-session report from three lenses (prompting, skill opportunities, CLAUDE.md currency), applying nothing |
+| [`sweep-the-siblings`](skills/sweep-the-siblings/README.md) | Turn one review finding into a checked answer about every sibling file: quote the rule, sweep for candidates, read each one, publish both counts |
 
 Each skill's README carries its triggers and a worked example; the `SKILL.md`
 beside it is the procedure the agent follows.
