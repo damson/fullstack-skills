@@ -1,9 +1,9 @@
 ---
 name: merge-on-go-ahead
 description: >
-  Use when the user authorises merging specific pull requests: "merge #4",
-  "12 and 13 are ready", "go ahead and land it", "ship the ones that are
-  green". Owns only the merge itself: it confirms the authorisation covers
+  Use when the user authorises merging pull requests they name: "merge #4",
+  "12 and 13 are ready", "land 21 and 22", or a bare "go ahead" in a thread
+  about one identified PR. Owns only the merge itself: it confirms the authorisation covers
   this PR at its current head, checks the gates the repo actually enforces,
   merges in the repo's own convention, and waits out the recomputation
   before touching a dependent PR. Do NOT fire without an authorisation
@@ -30,6 +30,7 @@ merge style the repo forbids, or while a review sits unanswered.
 
    ```bash
    gh pr view <n> --json number,headRefOid,baseRefName,isDraft,mergeable,mergeStateStatus
+   head=$(gh pr view <n> --json headRefOid --jq .headRefOid)   # step 6 merges against this
    ```
 
    An authorisation is per pull request and per head. It does not roll forward
@@ -43,13 +44,15 @@ merge style the repo forbids, or while a review sits unanswered.
    ```bash
    gh api repos/<owner>/<repo>/branches/<base>/protection \
      --jq '.required_status_checks.contexts'
-   gh api repos/<owner>/<repo>/rulesets --jq '.[] | "\(.name) \(.enforcement)"'
+   gh api repos/<owner>/<repo>/rules/branches/<base>          # rules in force here
    ```
 
-   A branch with no protection answers that first call with `404 Branch not
+   Two sources, because either can be empty while the other gates. A branch
+   with no classic protection answers the first call with `404 Branch not
    protected`, which is an answer (nothing is required here), not a failure to
-   route around: read it, then rely on the ruleset and the repo's own written
-   policy instead.
+   route around. The second is the one to trust for rulesets: a repository-wide
+   listing tells you a ruleset exists, while this endpoint tells you which
+   rules apply to *this* base, with their parameters.
 
    Judge each check by `status` and `conclusion` per the checks-watching
    discipline (`await-pr-checks` covers it, including the reruns and the
@@ -67,8 +70,15 @@ merge style the repo forbids, or while a review sits unanswered.
 
    ```bash
    gh api repos/<owner>/<repo> --jq '{squash: .allow_squash_merge, merge: .allow_merge_commit, rebase: .allow_rebase_merge}'
+   gh api repos/<owner>/<repo>/rules/branches/<base> \
+     --jq '.[] | select(.type == "pull_request") | .parameters.allowed_merge_methods'
    grep -rniE "squash|merge commit" CONTRIBUTING* docs/ .github/ 2>/dev/null | head
    ```
+
+   The three answers are not the same question. The first is what the
+   repository *permits* anywhere, the second is what a rule *allows on this
+   base* (often exactly one method, which settles it), the third is what the
+   project says it prefers where the rules leave a choice.
 
    Repos that allow several are the dangerous ones: allowed is not preferred,
    and the preference is usually written down. A project can also want
@@ -77,40 +87,66 @@ merge style the repo forbids, or while a review sits unanswered.
    is not the commits it squashed and breaks the ancestry the next step relies
    on.
 
-5. **Merge one at a time, in the stated method**, and let the command own the
-   line it runs on. Some tool wrappers classify a chained merge differently
-   from a bare one, and a merge that is refused halfway through a compound
-   command is harder to reason about than one that simply ran:
+5. **Deal with anything stacked on this PR before merging it.** A child whose
+   base is this branch does not follow the parent through the merge; it is left
+   pointing at a branch nobody will push to again, and its checks keep running
+   against it. Retarget the children first, or delete the parent branch as part
+   of the merge if that is what retargets them on this host. Polling a child's
+   mergeability does not repair a stale base, and `branch-hygiene` owns the
+   full post-merge sequence.
+
+6. **Merge one at a time, in the stated method, bound to the authorised head.**
+   Let the merge command own the line it runs on: some tool wrappers classify a
+   chained merge differently from a bare one, and a merge refused halfway
+   through a compound command is harder to reason about than one that simply
+   ran.
 
    ```bash
-   gh pr merge <n> --squash    # or --merge, per step 4
+   gh pr merge <n> --squash --match-head-commit "$head"   # or --merge, per step 4
    ```
 
-6. **Between dependent merges, wait for the recomputation.** After a parent
-   lands, a child's `mergeable` reads `UNKNOWN` until the host recomputes it,
-   and `UNKNOWN` is not `false`:
+   `--match-head-commit` is step 1's pin made mechanical: if anything was
+   pushed between the go-ahead and this command, the merge is refused instead
+   of quietly landing a commit nobody authorised.
+
+7. **Between dependent merges, wait for the recomputation, and do not read a
+   failure as an answer.** After a parent lands, a child's `mergeable` reads
+   `UNKNOWN` until the host recomputes it, and `UNKNOWN` is not `false`. A bare
+   command substitution in the loop test turns a failed API call into an empty
+   string, which is also not `UNKNOWN`, so the loop exits on the error:
 
    ```bash
-   until [ "$(gh pr view <child> --json mergeable --jq .mergeable)" != "UNKNOWN" ]; do sleep 5; done
-   gh pr view <child> --json mergeable,mergeStateStatus
+   for _ in $(seq 1 24); do
+     state=$(gh pr view <child> --json mergeable --jq .mergeable) || state=
+     [ -n "$state" ] && [ "$state" != "UNKNOWN" ] && break
+     sleep 5
+   done
+   [ -n "$state" ] && [ "$state" != "UNKNOWN" ] || { echo "mergeability never settled"; exit 1; }
    ```
 
    Acting on the interim value either merges something the host has not
    finished judging, or abandons a PR that was fine two seconds later.
 
-7. **Prove it landed by content, not by ancestry.** A squash merge produces a
-   commit that is not the branch's commits, so `git merge-base --is-ancestor`
-   answers "not merged" for work that is fully merged. Compare what the branch
-   changed against the base instead:
+8. **Prove it landed with the merge commit, not the branch tip.** A squash
+   produces a commit that is not the branch's commits, so asking whether the
+   *head* is an ancestor of the base answers "not merged" for work that is
+   fully merged. The merge commit the host recorded is on the base, so ask
+   about that one:
 
    ```bash
    git fetch --prune
-   git diff --stat origin/<base> origin/<branch> -- <paths the branch touched>
+   mc=$(gh pr view <n> --json mergeCommit --jq .mergeCommit.oid)
+   git merge-base --is-ancestor "$mc" origin/<base> && echo landed
    ```
 
-   Empty output for those paths is the landing proof; ancestry is not.
+   Where no merge commit is recorded (a PR closed and applied by hand), fall
+   back to content: capture the paths **before** merging
+   (`git diff --name-only origin/<base>...origin/<branch>`) and compare them
+   against the fetched head ref (`refs/pull/<n>/head`) afterwards, since the
+   branch itself may be gone. Read that comparison the same day: once another
+   PR touches those paths, a difference stops meaning anything about this one.
 
-8. **Report per PR, naming the method**: `#12 squashed into develop, #13
+9. **Report per PR, naming the method**: `#12 squashed into develop, #13
    squashed, both branches deleted`. Cleaning up the merged branches and their
    worktrees is its own procedure (`branch-hygiene`); a promotion to the branch
    people install from is a release cycle, not a merge, and belongs to

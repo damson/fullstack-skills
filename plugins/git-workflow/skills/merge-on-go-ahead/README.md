@@ -23,8 +23,8 @@ It fires on an authorisation that names pull requests:
 
 - "merge 12"
 - "14 and 15 are ready to go"
-- "go ahead and land it"
-- "ship the green ones"
+- "land 21, the checks are green"
+- "go ahead" in a thread about one identified pull request
 
 It deliberately does **not** fire on:
 
@@ -39,21 +39,28 @@ It deliberately does **not** fire on:
 Two pull requests are authorised, the second stacked on the first.
 
 The skill pins both heads and finds the first still at the commit that was
-reviewed. It reads the base branch's required contexts rather than the rendered
-checks list, because a summary that says "1 failing" is often a job named for
-the failure it is supposed to force. It confirms the review reply exists, looks
-the merge method up (this repository allows all three, and states its
-preference in `CONTRIBUTING.md`: squash into the integration branch, a merge
-commit for the promotion), and squashes the first.
+reviewed, keeping that SHA for the merge command itself. It reads the rules in
+force on the base rather than the rendered checks list, because a summary that
+says "1 failing" is often a job named for the failure it is supposed to force,
+and because the rule on a base frequently allows exactly one merge method,
+which settles a question the repository-level settings leave open. It confirms
+the review reply exists and squashes the first with `--match-head-commit`, so a
+commit pushed in the meantime refuses the merge instead of riding in on an
+authorisation given for something else.
 
-Then it waits. Immediately after the parent lands, the child's `mergeable`
-reads `UNKNOWN`, which is not `false`, and a decision taken on that value is a
-coin toss. Once the host has recomputed, the child merges the same way.
+The child is dealt with before the parent moves, not after: a stacked pull
+request does not follow its parent through a merge, it is left pointing at a
+branch nobody will push to again. Then the skill waits. Immediately after the
+parent lands, the child's `mergeable` reads `UNKNOWN`, which is not `false`,
+and a decision taken on that value is a coin toss. The wait is bounded and
+treats a failed read as a failed read: a bare command substitution turns an API
+error into an empty string, which is also not `UNKNOWN`, and the loop would
+exit on it looking satisfied.
 
-Landing is confirmed by content, not ancestry: a squash is not the commits it
-squashed, so `git merge-base --is-ancestor` reports fully merged work as
-unmerged. `git diff --stat` between the base and the branch, over the paths the
-branch touched, comes back empty when the work is in.
+Landing is confirmed with the merge commit, not the branch tip. A squash is not
+the commits it squashed, so asking whether the head is an ancestor of the base
+reports fully merged work as unmerged: on a real PR here, the head answered
+"no" while the recorded merge commit answered "yes" against the same branch.
 
 The report names the method, because "merged" alone does not distinguish the
 one that keeps the history the next promotion needs from the one that breaks
