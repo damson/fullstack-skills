@@ -1,14 +1,14 @@
 name: CI
 
 on:
-  # Every pull request except the one into main. The release pull request is
-  # opened by the release workflow with GITHUB_TOKEN, and GitHub answers that
-  # with a run it refuses to start: zero jobs, no logs, conclusion `failure`,
-  # two seconds from created to updated. It gates nothing (the release workflow
-  # posts the required `validate` status itself, from a real run of these same
-  # commands) but it puts a red row in the Actions tab on every release, and a
-  # red that always means nothing is how a red that means something gets
-  # ignored. A pull request into main from anywhere else is a hotfix: run this
+  # Every pull request except the one into main. The release pull request
+  # auto-merges the moment the release workflow posts its `validate` status, so
+  # the run this trigger starts is killed by that merge a second later: GitHub
+  # drops the merge ref and records zero jobs, no logs, conclusion `failure`.
+  # It gates nothing (the release workflow posts `validate` itself, from a real
+  # run of these same commands) but it puts a red row in the Actions tab on
+  # every release, and a red that always means nothing is how a red that means
+  # something gets ignored. A pull request into main from anywhere else is a hotfix: run this
   # workflow on its branch with workflow_dispatch and the `validate` check that
   # branch protection wants lands on the same head commit.
   pull_request:
