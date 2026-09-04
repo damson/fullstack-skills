@@ -192,6 +192,7 @@ It is also a GitHub Action, so a build fails when config quality slips below a
 grade you choose:
 
 ```yaml
+- uses: actions/checkout@v4
 - uses: damson/agent-config-harness@v1
   env:
     ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
