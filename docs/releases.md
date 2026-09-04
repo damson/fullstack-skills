@@ -55,7 +55,7 @@ you cannot release nothing.
 Marketplace tags are CalVer and plugin versions are semver on purpose. The tag
 answers *when*; a plugin's version answers *what changed in it*.
 
-## Three couplings that will not announce themselves
+## Four couplings that will not announce themselves
 
 **The propose job needs a repository setting that is off by default.** It opens
 the release PR with `GITHUB_TOKEN`, which requires *Settings → Actions →
@@ -81,6 +81,18 @@ it costs a manual back-merge review and muddies `develop`'s history. The
 mechanical guard is a repository ruleset restricting merges into `main` to
 merge commits (Settings → Rules, a `pull_request` rule with
 `allowed_merge_methods: ["merge"]`); prose warnings do not gate UI buttons.
+
+**The release PR never gets a CI run of its own.** It is opened with
+`GITHUB_TOKEN`, and GitHub will not start a workflow for an event that token
+raised. What it does instead is worse than nothing: it creates the run, gives
+it zero jobs and no logs, and completes it as `failure` about two seconds
+later. That run gates nothing, which is why the propose job runs the two
+validators itself and posts the result as the `validate` status on the same
+head commit. Read a release PR's checks, not the Actions tab; and since
+2026-09-04 `ci.yml` ignores pull requests into `main` so the phantom row is not
+created at all. A hotfix PR into `main` from a branch other than `develop`
+therefore needs `validate` from a `workflow_dispatch` run on that branch, which
+lands on the same commit and satisfies protection.
 
 ## Holding a release
 
