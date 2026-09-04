@@ -7,6 +7,12 @@ place across rounds, never a new comment per round), and no finding is ever
 answered with silence. The failure it prevents is the unreadable review thread:
 ten pushes, ten bot comments, and findings that were quietly dropped.
 
+On a repository no bot reviews, it starts one step earlier and gets a review
+rather than processing one: hosted reviewers are typically free for public repos
+only, and their config file grants nothing without the app also being given
+access to that repository, so "it is configured" is not evidence any review will
+arrive.
+
 Read [SKILL.md](SKILL.md) for the procedure. This file is what it does and how
 to reach it.
 
@@ -19,6 +25,7 @@ PR. You can also ask directly:
 - "anything to address in PR 14?"
 - "review the comments"
 - "what's the status of the PRs?"
+- "get this reviewed before I merge it"
 
 It skips when no PRs are open, or when you say "ignore the comments". It never
 closes or merges a PR; that stays your call.

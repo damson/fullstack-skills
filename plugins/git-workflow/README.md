@@ -1,6 +1,6 @@
 # git-workflow
 
-Branch, worktree and pull-request hygiene: twelve skills for the moments where
+Branch, worktree and pull-request hygiene: thirteen skills for the moments where
 git and GitHub quietly do something other than what everyone at the keyboard
 believed.
 
@@ -32,6 +32,7 @@ happen.
 | [`parallel-pr-fanout`](skills/parallel-pr-fanout/README.md) | Land a batch of independent fixes as file-disjoint PRs built by parallel agents, with briefs and scope fences that hold |
 | [`bump-vendored-pin`](skills/bump-vendored-pin/README.md) | Move a pinned vendored dependency only with the evidence that earned the new commit |
 | [`wire-scheduled-workflow`](skills/wire-scheduled-workflow/README.md) | Check a cron workflow is actually registered: GitHub only arms schedules from the default branch |
+| [`close-the-release-cycle`](skills/close-the-release-cycle/README.md) | Run a release to completion: promote, tag, move the floating tag, back-merge, and prove each one happened |
 
 Each skill's README carries its triggers and a worked example; the `SKILL.md`
 beside it is the procedure the agent follows.

@@ -5,11 +5,42 @@ description: >
   last check. Auto-trigger after any `git push` to a feature branch, after merging a PR
   (its siblings' review threads may have moved), and any time the user asks "is PR N
   ready?" / "what's the status of PRs?" / "manage the open PRs" / "anything to address
-  in PR N?" / "review the PR comments". Skip if no PRs are open or if the user explicitly
-  says "ignore the comments".
+  in PR N?" / "review the PR comments". Also fires **before handing over a PR on a
+  repo no bot reviews**, where the job is to obtain a review rather than process one.
+  Skip if no PRs are open or if the user explicitly says "ignore the comments".
 ---
 
 # PR comment loop
+
+## Step 0 — when no reviewer is coming
+
+This loop processes findings; a repo no bot reviews produces none, and the
+failure is a PR handed over unreviewed. Config is not evidence: hosted reviewers
+are usually free for public repos only, and their config file grants nothing
+without the app also having access. Ask whether one has ever run there:
+
+```bash
+# .user.type is the account's own kind — matching logins against "bot|ai"
+# counts a human called chair as a reviewer and misses a bot called sentry
+{ gh api "repos/<owner>/<repo>/issues/<n>/comments" --paginate --jq '.[]|select(.user.type=="Bot")|.user.login'
+  gh api "repos/<owner>/<repo>/pulls/<n>/reviews"   --paginate --jq '.[]|select(.user.type=="Bot")|.user.login'
+} | sort -u
+```
+
+Empty means you are the review, so get one from a **fresh context** — the value
+is in not having authored the thing. Give it what it cannot discover (what is
+vendored, what is deliberate, what is already settled), point it at the PR and
+the checked-out branch, tell it to run the claims rather than read them, and
+require both an explicit "nothing to report" per category and a verdict. Its
+reply is not a GitHub comment, so step 2 will not find it: carry the returned
+findings as this round's list, and re-enter at step 3 to verify each against the
+source like any bot's. No review obtainable at all → say so and hand the PR
+back, rather than merging on your own approval.
+
+**The durable fix is repo-side:** an advisory workflow that reviews each PR and
+upserts one sticky comment. Wire it so the model has no write capability (it
+writes a file; a plain shell step posts it) and so an empty review warns loudly,
+or a green check will mean only that the workflow ran.
 
 ## Procedure
 
@@ -17,10 +48,33 @@ For each open PR you have touched in this session — OR all open PRs in the cur
 
 1. **Snapshot state**:
    ```bash
-   gh pr view <n> --json mergeable,mergeStateStatus,statusCheckRollup,comments,baseRefName
+   # reviews as well as comments: `--json` returns only what it is asked for,
+   # and step 3 reads `.reviews[].body`, where a review's own findings live
+   gh pr view <n> --json mergeable,mergeStateStatus,statusCheckRollup,comments,reviews,baseRefName
    ```
 
-2. **Identify NEW comments** since your last reply on that PR: run the sticky-comment selector (defined once, in step 6 where it is also used to post) and compare each comment's `createdAt` against the sticky's **last-edit time**, `jq -r '.[0].updated_at' <<<"$mine"` — the selector's `select()` keeps whole REST comment objects, and creation time never advances once the sticky is edited in place. No sticky yet → every comment is new.
+2. **Identify NEW comments** since your last reply on that PR. Your last reply is
+   the sticky comment, and the upsert in step 6 overwrites whatever selects it,
+   silently — so build the selector here, exactly as written, and reuse it there:
+
+   ```bash
+   marker='<!-- claude-review-response -->'
+   me=$(gh api user -q .login)
+   # REST, not `gh pr view` — its objects carry the numeric id and updated_at
+   # MY comments whose body STARTS WITH the marker — never `contains`, never the reviewer's
+   mine=$(gh api "repos/<owner>/<repo>/issues/<n>/comments" --paginate \
+     --jq "[.[] | select(.user.login == \"$me\" and (.body | startswith(\"$marker\")))]")
+   ```
+
+   Three traps, all hit for real:
+
+   - **Match the marker with `startswith`, never `contains`.** An automated reviewer that *quotes* your marker — because it is reviewing the very diff that introduced it — matches a `contains` filter, and you overwrite the review.
+   - **Exclude the reviewer's own account** from the candidate set, identified by author login, so the filter can only ever select your own comment.
+   - **Count the matches here, not in step 6.** Zero is no sticky yet, so every comment is new; one is the sticky; more than one stops the loop and is surfaced to the user. Counting later lets the loop classify, edit and push before it aborts, and overwriting the wrong comment raises no error.
+
+   With exactly one, compare each comment's `createdAt` against the sticky's
+   **last-edit time**, `jq -r '.[0].updated_at' <<<"$mine"` — creation time never
+   advances once the sticky is edited in place.
 
 3. **Verify each finding against the source, then classify it.** Before acting on a finding, open the cited `file:line` in the actual source. Cold-read reviewers see the diff without surrounding context and are confidently wrong often enough that applying findings unchecked introduces bugs — the classic misses: a "missing" guard that exists just outside the hunk, a demanded convention the repo doesn't have, a finding re-raised rounds after it was applied. A finding that does not survive that check is 🚫 Skipped, never silenced — the step 6 table owns the rationale rules.
 
@@ -49,21 +103,14 @@ For each open PR you have touched in this session — OR all open PRs in the cur
 
 6. **Post a reply comment on the PR.** The audit trail of "comment seen, classified, addressed" must live on GitHub — a reply in the Claude session does NOT count. Use sticky-comment style (`<!-- claude-review-response -->` marker → upsert) so re-runs don't spam the PR — **one comment per PR, edited in place across rounds, never a new one each round.**
 
-   ### Finding the sticky comment safely
+   ### Posting it
 
-   The upsert overwrites whatever it selects, and does so silently — so the selector must be exact. Three traps, all hit for real:
-
-   - **Match the marker with `startswith`, never `contains`.** An automated reviewer that *quotes* your marker — because it is reviewing the very diff that introduced it — matches a `contains` filter, and you overwrite the review.
-   - **Exclude the reviewer's own account** from the candidate set, identified by author login, so the filter can only ever select your own comment.
-   - **Count the matches and abort unless exactly one.** Patch the single match; if zero, post fresh; if more than one, stop and surface it. Overwriting the wrong comment raises no error.
+   Upsert against `$mine` from step 2. Re-run that assignment first if the shell
+   has been replaced since — the cardinality rule is the same, and a `$mine` that
+   is empty because the variable was never set posts a duplicate rather than
+   editing in place.
 
    ```bash
-   marker='<!-- claude-review-response -->'
-   me=$(gh api user -q .login)
-   # REST, not `gh pr view` — its objects carry the numeric id and updated_at
-   # MY comments whose body STARTS WITH the marker — never `contains`, never the reviewer's
-   mine=$(gh api "repos/<owner>/<repo>/issues/<n>/comments" --paginate \
-     --jq "[.[] | select(.user.login == \"$me\" and (.body | startswith(\"$marker\")))]")
    case "$(jq length <<<"$mine")" in
      0) gh pr comment <n> --body-file reply.md ;;
      1) gh api -X PATCH "repos/<owner>/<repo>/issues/comments/$(jq -r '.[0].id' <<<"$mine")" -F body=@reply.md ;;
@@ -135,5 +182,9 @@ For each open PR you have touched in this session — OR all open PRs in the cur
 - An 🔴 finding's fix is non-trivial AND ambiguous (would require a design call).
 - A finding contradicts an earlier decision in the session — surface the contradiction before re-litigating.
 - All CI checks are red and root cause isn't obvious — don't push speculative fixes.
-- Test count drops vs the previous push — surface this before continuing.
+- A check that was green in the previous round's step 1 snapshot is red in this
+  one — your own fix caused it; surface it before continuing.
+- A fix you applied deletes or skips a test — say so and stop, whatever the
+  finding claimed. A reviewer asking for less coverage is a finding to argue
+  with, not to apply.
 - Never close or merge the PR from this skill — that is always the user's call.
