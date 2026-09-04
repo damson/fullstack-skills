@@ -28,6 +28,10 @@ directives below are agent-only.
   agent review on a cheap model (haiku), post that agent's findings as a PR
   comment, and answer them under the same gate — the review must still be
   independent of whoever wrote the diff.
+- After a fix push, CodeRabbit often posts no new review object; its **check
+  flipping to SUCCESS on the new head** is the signal that the push was
+  reviewed. Read the check, not the reviews list, before retriggering, which
+  spends quota to be told the commit was already reviewed.
 - The release PR (`develop → main`) merges with a **merge commit, never a
   squash** — why, and what a squash costs: `docs/releases.md`.
 
