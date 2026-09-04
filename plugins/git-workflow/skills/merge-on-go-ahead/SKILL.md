@@ -30,7 +30,9 @@ merge style the repo forbids, or while a review sits unanswered.
 
    ```bash
    gh pr view <n> --json number,headRefOid,baseRefName,isDraft,mergeable,mergeStateStatus
-   head=$(gh pr view <n> --json headRefOid --jq .headRefOid)   # step 6 merges against this
+   # one line per authorised PR, kept for step 6; a single `head` variable is
+   # overwritten by the next PR and then matches the wrong one
+   gh pr view <n> --json number,headRefOid --jq '[.number, .headRefOid] | @tsv' >> authorised.tsv
    ```
 
    An authorisation is per pull request and per head. It does not roll forward
@@ -70,15 +72,19 @@ merge style the repo forbids, or while a review sits unanswered.
 
    ```bash
    gh api repos/<owner>/<repo> --jq '{squash: .allow_squash_merge, merge: .allow_merge_commit, rebase: .allow_rebase_merge}'
-   gh api repos/<owner>/<repo>/rules/branches/<base> \
-     --jq '.[] | select(.type == "pull_request") | .parameters.allowed_merge_methods'
-   grep -rniE "squash|merge commit" CONTRIBUTING* docs/ .github/ 2>/dev/null | head
+   gh api repos/<owner>/<repo>/rules/branches/<base> > rules.json
+   # every rule that narrows the choice, not just the first one
+   jq '[.[] | select(.type == "pull_request") | .parameters.allowed_merge_methods] | add' rules.json
+   jq 'any(.[]; .type == "required_linear_history")' rules.json    # true rules out --merge
+   grep -rniE "squash|rebase|merge commit" CONTRIBUTING* docs/ .github/ 2>/dev/null | head
    ```
 
-   The three answers are not the same question. The first is what the
-   repository *permits* anywhere, the second is what a rule *allows on this
-   base* (often exactly one method, which settles it), the third is what the
-   project says it prefers where the rules leave a choice.
+   The answers are not the same question. The repository flags say what is
+   *permitted anywhere*; the rules say what is *allowed on this base*, and
+   several can apply at once, so intersect them rather than reading the first.
+   A `required_linear_history` rule removes `--merge` whatever the merge-method
+   list says. What is left is narrowed by what the project says it prefers, and
+   `rebase` is a real answer there, not only `squash` and `merge`.
 
    Repos that allow several are the dangerous ones: allowed is not preferred,
    and the preference is usually written down. A project can also want
@@ -102,7 +108,8 @@ merge style the repo forbids, or while a review sits unanswered.
    ran.
 
    ```bash
-   gh pr merge <n> --squash --match-head-commit "$head"   # or --merge, per step 4
+   head=$(awk -v n=<n> '$1 == n { print $2 }' authorised.tsv)   # this PR's pin, not the last one read
+   gh pr merge <n> --squash --match-head-commit "$head"        # --merge or --rebase, per step 4
    ```
 
    `--match-head-commit` is step 1's pin made mechanical: if anything was
@@ -140,11 +147,21 @@ merge style the repo forbids, or while a review sits unanswered.
    ```
 
    Where no merge commit is recorded (a PR closed and applied by hand), fall
-   back to content: capture the paths **before** merging
-   (`git diff --name-only origin/<base>...origin/<branch>`) and compare them
-   against the fetched head ref (`refs/pull/<n>/head`) afterwards, since the
-   branch itself may be gone. Read that comparison the same day: once another
-   PR touches those paths, a difference stops meaning anything about this one.
+   back to content. The branch may be gone by then, so capture the paths before
+   merging and read the head back from the ref the host keeps:
+
+   ```bash
+   # before the merge
+   git diff --name-only origin/<base>...origin/<branch> > paths.txt
+
+   # after it, against the authorised head rather than a branch that may not exist
+   git fetch origin "refs/pull/<n>/head:refs/pr/<n>"
+   git diff --stat origin/<base> "refs/pr/<n>" -- $(cat paths.txt)
+   ```
+
+   Empty output means those paths are identical on the base. Read it the same
+   day: once another PR touches one of them, a difference stops saying anything
+   about this one.
 
 9. **Report per PR, naming the method**: `#12 squashed into develop, #13
    squashed, both branches deleted`. Cleaning up the merged branches and their
