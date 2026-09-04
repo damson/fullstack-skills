@@ -84,8 +84,22 @@ For each open PR you have touched in this session — OR all open PRs in the cur
 
    ```bash
    gh api "repos/<owner>/<repo>/pulls/<n>/comments" \
-     --jq '.[] | select(.line == null) | {path, was: .original_line, at: .original_commit_id[0:7]}'
+     --jq '.[] | select(.subject_type == "line" and .line == null)
+           | {id, path, body, diff_hunk,
+              was: .original_line, from: .original_start_line,
+              at: .original_commit_id}'
    ```
+
+   Two things that projection is doing deliberately. It keeps what verifying a
+   finding needs — the id to reply to it, the body and `diff_hunk` to read what
+   it actually said, the full commit id rather than a prefix — because a
+   dismissal you cannot re-read is indistinguishable from one you never made.
+   And it pins the filter to `subject_type == "line"`, since a file-level
+   comment is attached to a whole file rather than a line and is current no
+   matter what its line field says. GitHub reports `line: 1` for those today
+   (checked by posting one and reading it back), so `.line == null` alone does
+   not currently catch them; the guard is there so that a change in that
+   behaviour cannot silently turn a live finding into a dismissed one.
 
    Stale means the line moved, not that the defect is gone, so read the current
    file before dismissing one — but this routinely turns an alarming count into
