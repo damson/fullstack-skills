@@ -138,7 +138,11 @@ for _ in $(seq 1 30); do
   docker exec pg-ci pg_isready -U postgres >/dev/null 2>&1 && break
   sleep 1
 done
-docker exec pg-ci pg_isready -U postgres || { echo "postgres never accepted connections"; exit 1; }
+docker exec pg-ci pg_isready -U postgres || {
+  echo "postgres never accepted connections"
+  docker stop pg-ci >/dev/null   # --rm only removes it once it stops
+  exit 1
+}
 
 # Bootstrap the same roles CI does — the list comes from the workflow file
 psql "host=localhost user=postgres password=test" -c "
