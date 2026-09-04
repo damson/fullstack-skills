@@ -31,7 +31,13 @@ refuses to call it done on a signal that has not been checked.
 
    A repo that automates its own release is driven, not bypassed: dispatch its
    workflow rather than hand-rolling the steps below, then verify its output the
-   same way.
+   same way. Dispatching needs the workflow to accept it, so read its trigger and
+   required inputs first; where there is no `workflow_dispatch`, produce the event
+   it does listen for rather than working around it.
+
+   ```bash
+   gh workflow view <file.yml> --yaml | sed -n '/^on:/,/^jobs:/p'
+   ```
 
 2. **Confirm there is something to promote, by content and not by commit
    count.** After a promotion plus its back-merge, the integration branch is
@@ -61,8 +67,13 @@ refuses to call it done on a signal that has not been checked.
    workflow gated on a push to the release branch never runs. Nothing goes red.
 
    ```bash
-   gh release list --limit 3            # is the new tag actually there?
+   git ls-remote --tags <url> "refs/tags/<vX.Y.Z>"   # the tag itself
+   gh release list --limit 3                        # the Release object, where the repo publishes one
    ```
+
+   The tag ref is the check that decides whether to tag again. A repo can tag
+   without publishing a Release, and reading the release list alone would send
+   you round to re-tag a commit that already carries the tag.
 
    If a workflow owns tagging and did not fire, dispatch it rather than tagging
    by hand: a tag job worth its name is idempotent and is the repo's own
@@ -75,6 +86,11 @@ refuses to call it done on a signal that has not been checked.
    ```bash
    git ls-remote --tags <url> | grep -vE 'v?[0-9]+\.[0-9]+\.[0-9]+(\^\{\})?$'
    ```
+
+   That filter returns candidates, not an answer: `nightly`, `beta` and `docs`
+   survive it too, and `force=true` on one of those repoints a ref nobody asked
+   you to touch. Move only a tag the released version extends — `v1` for
+   `v1.2.3` — and only where the repo tells consumers to pin it.
 
    Nobody pinning it moves until you do, so a correctness fix stays undelivered
    while the release page says otherwise.
@@ -98,7 +114,8 @@ refuses to call it done on a signal that has not been checked.
    one has caught a real omission:
 
    ```bash
-   gh api repos/<owner>/<repo>/compare/<main>...<develop> --jq .status  # not "behind"
+   # expect identical or ahead; behind or diverged means the back-merge did not land
+   gh api repos/<owner>/<repo>/compare/<main>...<develop> --jq .status
    gh release view <vX.Y.Z> --json tagName,targetCommitish
    gh api repos/<owner>/<repo>/git/ref/tags/<vX> --jq .object.sha       # == the release sha
    ```

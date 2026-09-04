@@ -5,8 +5,9 @@ description: >
   cannot have happened, a badge reading "unknown" or an implausible number, a
   run that failed with nothing in it, a command that "found nothing" it should
   have found. Fires on "the check is green but...", "the badge still says
-  unknown", "why did that fail", "it says it passed", "that number cannot be
-  right". Do NOT fire for an honest failure with a real error in a real log:
+  unknown", "why did that fail with nothing in the log", "it says it passed but
+  nothing ran", "that number cannot be right". Do NOT fire for an honest failure
+  with a real error in a real log:
   that is debugging, and the log is already telling the truth.
 ---
 
@@ -36,18 +37,26 @@ class of problem is spent fixing something that was never broken.
    | "No matches" | whether the command ran at all |
 
 3. **Read the source, not a rendering of it.** Fetch the record and quote what
-   it says. Three renderings that routinely mislead:
+   it says. Three renderings that routinely mislead — `<o>/<r>` is the owner and
+   repository, `<id>` the run id the surface itself names:
 
    ```bash
    # A run that failed with no jobs is a startup failure, not your code
    gh api repos/<o>/<r>/actions/runs/<id>/jobs --jq .total_count
 
-   # A step "succeeded" because it was configured not to fail the job
-   gh run view <id> --log | grep -iE "error|failed|not found"
+   # A step's own conclusion, which a "do not fail the build" setting hides from
+   # the job's rolled-up status; read it before reading the log for a reason why
+   gh api repos/<o>/<r>/actions/runs/<id>/jobs \
+     --jq '.jobs[].steps[] | select(.conclusion != "success") | {name, conclusion}'
 
    # An image is not data: parse the text node, never grep the markup
    curl -s "<badge-url>" | tr '>' '\n' | grep -E '^(unknown|[0-9]+%)'
    ```
+
+   The commands are one host's; the move is not. Anywhere else, find the endpoint
+   that returns the record rather than the page that renders it, and where the
+   host publishes none, report that the surface could not be checked instead of
+   trusting it.
 
 4. **Suspect the reporter before the work**, in this order, because this is the
    order of frequency: the surface is scoped to something else (a different
@@ -86,5 +95,7 @@ class of problem is spent fixing something that was never broken.
   activated, an app never granted access). Report it with the evidence; it is
   not fixable from the repository, and guessing at repo-side fixes for it burns
   time and leaves debris.
-- **Two independent reads disagree.** Something is caching. Wait, or bypass the
-  cache explicitly, before concluding anything.
+- **Two independent reads disagree.** Before blaming a cache, check they asked
+  the same question — same commit, same branch, same scope — and that both were
+  taken after the last write. Once they were, it is a cache or a lagging
+  replica: wait or bypass it explicitly, and conclude nothing until they agree.

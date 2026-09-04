@@ -20,16 +20,22 @@ are usually free for public repos only, and their config file grants nothing
 without the app also having access. Ask whether one has ever run there:
 
 ```bash
-gh pr view <n> --json comments,reviews \
-  --jq '[(.comments[]?,.reviews[]?)|select(.author.login|test("bot|rabbit|ai"))]|length'
+# .user.type is the account's own kind — matching logins against "bot|ai"
+# counts a human called chair as a reviewer and misses a bot called sentry
+{ gh api "repos/<owner>/<repo>/issues/<n>/comments" --paginate --jq '.[]|select(.user.type=="Bot")|.user.login'
+  gh api "repos/<owner>/<repo>/pulls/<n>/reviews"   --paginate --jq '.[]|select(.user.type=="Bot")|.user.login'
+} | sort -u
 ```
 
-Zero means you are the review, so get one from a **fresh context** — the value
+Empty means you are the review, so get one from a **fresh context** — the value
 is in not having authored the thing. Give it what it cannot discover (what is
 vendored, what is deliberate, what is already settled), point it at the PR and
 the checked-out branch, tell it to run the claims rather than read them, and
-require both an explicit "nothing to report" per category and a verdict. Then
-re-enter at step 3 and verify its findings against the source like any bot's.
+require both an explicit "nothing to report" per category and a verdict. Its
+reply is not a GitHub comment, so step 2 will not find it: carry the returned
+findings as this round's list, and re-enter at step 3 to verify each against the
+source like any bot's. No review obtainable at all → say so and hand the PR
+back, rather than merging on your own approval.
 
 **The durable fix is repo-side:** an advisory workflow that reviews each PR and
 upserts one sticky comment. Wire it so the model has no write capability (it
@@ -45,7 +51,9 @@ For each open PR you have touched in this session — OR all open PRs in the cur
    gh pr view <n> --json mergeable,mergeStateStatus,statusCheckRollup,comments,baseRefName
    ```
 
-2. **Identify NEW comments** since your last reply on that PR: run the sticky-comment selector — it is written out in step 6, where it is also used to post, so run that `mine=$(…)` assignment here rather than reading `$mine` before it exists — and compare each comment's `createdAt` against the sticky's **last-edit time**, `jq -r '.[0].updated_at' <<<"$mine"` — the selector's `select()` keeps whole REST comment objects, and creation time never advances once the sticky is edited in place. No sticky yet → every comment is new.
+2. **Identify NEW comments** since your last reply on that PR: run the sticky-comment selector — it is written out in step 6, where it is also used to post, so run that `mine=$(…)` assignment here rather than reading `$mine` before it exists — and compare each comment's `createdAt` against the sticky's **last-edit time**, `jq -r '.[0].updated_at' <<<"$mine"` — the selector's `select()` keeps whole REST comment objects, and creation time never advances once the sticky is edited in place. No sticky yet → every comment is new. Run step 6's cardinality check here as
+well: more than one match has to stop the loop now, while it has changed
+nothing, rather than after it has classified, edited and pushed.
 
 3. **Verify each finding against the source, then classify it.** Before acting on a finding, open the cited `file:line` in the actual source. Cold-read reviewers see the diff without surrounding context and are confidently wrong often enough that applying findings unchecked introduces bugs — the classic misses: a "missing" guard that exists just outside the hunk, a demanded convention the repo doesn't have, a finding re-raised rounds after it was applied. A finding that does not survive that check is 🚫 Skipped, never silenced — the step 6 table owns the rationale rules.
 
