@@ -91,7 +91,8 @@ remembers to resume.
 
 ## The tests, and where they came from
 
-`scripts/validate-skills.sh` is vendored from `agent-config-harness`, at the
+`scripts/validate-skills.sh` is vendored from
+[`agent-config-harness`](https://github.com/damson/agent-config-harness), at the
 commit named in its header. It began as a copy because the harness was private
 then; it stays one now that the harness is public because the copy is what
 keeps contribution self-contained: the exact check CI runs sits in the repo,
