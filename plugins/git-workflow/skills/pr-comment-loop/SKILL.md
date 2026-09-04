@@ -51,9 +51,28 @@ For each open PR you have touched in this session — OR all open PRs in the cur
    gh pr view <n> --json mergeable,mergeStateStatus,statusCheckRollup,comments,baseRefName
    ```
 
-2. **Identify NEW comments** since your last reply on that PR: run the sticky-comment selector — it is written out in step 6, where it is also used to post, so run that `mine=$(…)` assignment here rather than reading `$mine` before it exists — and compare each comment's `createdAt` against the sticky's **last-edit time**, `jq -r '.[0].updated_at' <<<"$mine"` — the selector's `select()` keeps whole REST comment objects, and creation time never advances once the sticky is edited in place. No sticky yet → every comment is new. Run step 6's cardinality check here as
-well: more than one match has to stop the loop now, while it has changed
-nothing, rather than after it has classified, edited and pushed.
+2. **Identify NEW comments** since your last reply on that PR. Your last reply is
+   the sticky comment, and the upsert in step 6 overwrites whatever selects it,
+   silently — so build the selector here, exactly as written, and reuse it there:
+
+   ```bash
+   marker='<!-- claude-review-response -->'
+   me=$(gh api user -q .login)
+   # REST, not `gh pr view` — its objects carry the numeric id and updated_at
+   # MY comments whose body STARTS WITH the marker — never `contains`, never the reviewer's
+   mine=$(gh api "repos/<owner>/<repo>/issues/<n>/comments" --paginate \
+     --jq "[.[] | select(.user.login == \"$me\" and (.body | startswith(\"$marker\")))]")
+   ```
+
+   Three traps, all hit for real:
+
+   - **Match the marker with `startswith`, never `contains`.** An automated reviewer that *quotes* your marker — because it is reviewing the very diff that introduced it — matches a `contains` filter, and you overwrite the review.
+   - **Exclude the reviewer's own account** from the candidate set, identified by author login, so the filter can only ever select your own comment.
+   - **Count the matches here, not in step 6.** Zero is no sticky yet, so every comment is new; one is the sticky; more than one stops the loop and is surfaced to the user. Counting later lets the loop classify, edit and push before it aborts, and overwriting the wrong comment raises no error.
+
+   With exactly one, compare each comment's `createdAt` against the sticky's
+   **last-edit time**, `jq -r '.[0].updated_at' <<<"$mine"` — creation time never
+   advances once the sticky is edited in place.
 
 3. **Verify each finding against the source, then classify it.** Before acting on a finding, open the cited `file:line` in the actual source. Cold-read reviewers see the diff without surrounding context and are confidently wrong often enough that applying findings unchecked introduces bugs — the classic misses: a "missing" guard that exists just outside the hunk, a demanded convention the repo doesn't have, a finding re-raised rounds after it was applied. A finding that does not survive that check is 🚫 Skipped, never silenced — the step 6 table owns the rationale rules.
 
@@ -80,23 +99,19 @@ nothing, rather than after it has classified, edited and pushed.
    # confirm CLEAN before reporting back
    ```
 
+   Note the number of tests the suite reports on this run; the STOP list below
+   compares it against the previous one, and nothing else captures it.
+
 6. **Post a reply comment on the PR.** The audit trail of "comment seen, classified, addressed" must live on GitHub — a reply in the Claude session does NOT count. Use sticky-comment style (`<!-- claude-review-response -->` marker → upsert) so re-runs don't spam the PR — **one comment per PR, edited in place across rounds, never a new one each round.**
 
-   ### Finding the sticky comment safely
+   ### Posting it
 
-   The upsert overwrites whatever it selects, and does so silently — so the selector must be exact. Three traps, all hit for real:
-
-   - **Match the marker with `startswith`, never `contains`.** An automated reviewer that *quotes* your marker — because it is reviewing the very diff that introduced it — matches a `contains` filter, and you overwrite the review.
-   - **Exclude the reviewer's own account** from the candidate set, identified by author login, so the filter can only ever select your own comment.
-   - **Count the matches and abort unless exactly one.** Patch the single match; if zero, post fresh; if more than one, stop and surface it. Overwriting the wrong comment raises no error.
+   Upsert against `$mine` from step 2. Re-run that assignment first if the shell
+   has been replaced since — the cardinality rule is the same, and a `$mine` that
+   is empty because the variable was never set posts a duplicate rather than
+   editing in place.
 
    ```bash
-   marker='<!-- claude-review-response -->'
-   me=$(gh api user -q .login)
-   # REST, not `gh pr view` — its objects carry the numeric id and updated_at
-   # MY comments whose body STARTS WITH the marker — never `contains`, never the reviewer's
-   mine=$(gh api "repos/<owner>/<repo>/issues/<n>/comments" --paginate \
-     --jq "[.[] | select(.user.login == \"$me\" and (.body | startswith(\"$marker\")))]")
    case "$(jq length <<<"$mine")" in
      0) gh pr comment <n> --body-file reply.md ;;
      1) gh api -X PATCH "repos/<owner>/<repo>/issues/comments/$(jq -r '.[0].id' <<<"$mine")" -F body=@reply.md ;;
