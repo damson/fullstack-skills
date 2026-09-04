@@ -58,13 +58,27 @@ $ npx tsx probe.ts
 [ { missing_pos: 400, already_reviewed: 80 } ]
 ```
 
-That line is the deliverable, not "a few hundred". 400 is the size of the
-write; the 80 rows someone has already reviewed are the ones a blind `update`
-would overwrite, and they are visible only because the probe counted them
-separately instead of returning one total.
+That line is the deliverable, not "a few hundred". 400 is the candidate count,
+and the 80 are a subset of it: rows missing `part_of_speech` that someone has
+already reviewed. So a blind `update` writes 400 rows and overwrites those 80;
+a backfill that preserves reviewed work writes 320. One total would have hidden
+the difference, and the difference is the whole decision.
 
-The `::text` in step 3 is not folklore. Same connection, same driver, one cast
-apart:
+The `::text` in step 3 is not folklore. A second probe, same connection, same
+driver (`pg`, node-postgres), asks for the column names both ways:
+
+```ts
+const { rows } = await pool.query(`
+  select array_agg(attname)       as raw,
+         array_agg(attname::text) as cast
+  from pg_attribute
+  where attrelid = 'entries'::regclass and attnum > 0
+`)
+const { raw, cast } = rows[0]
+console.log('raw  typeof:', typeof raw,  'value:', raw)
+console.log('cast typeof:', typeof cast, 'value:', cast)
+console.log('spread raw :', [...raw].slice(0, 6))
+```
 
 ```console
 raw  typeof: string value: {id,headword,part_of_speech,reviewed_at}
