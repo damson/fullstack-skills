@@ -23,6 +23,10 @@ It also fires proactively **before** merging a PR that another open PR is based
 on; that is the moment a stack is lost, because merging the parent does not
 retarget the child, and deleting the parent's branch *closes* the child.
 
+It does not fire for deliberate history surgery on a single PR, which is
+`rewrite-pr-history`, nor for promoting the integration branch to the branch
+people install from, which is a release cycle with steps after the merge.
+
 It deliberately leaves `BLOCKED` and `UNSTABLE` PRs alone: those mean a red
 check or a missing review, which a rebase does not fix and a force-push only
 reruns.

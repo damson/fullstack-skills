@@ -7,7 +7,10 @@ description: >
   PRs", **before merging a PR that another open PR is based on**, or after
   running `gh pr merge`. Goal — drop duplicate commits introduced by the
   merge, force-push the open PRs onto the new base, prune dead worktrees and branches,
-  and close the issues the merged PR's keywords could not.
+  and close the issues the merged PR's keywords could not. Do NOT fire for
+  deliberate history surgery on one PR (dropping, reordering or splitting
+  commits is `rewrite-pr-history`) or for promoting an integration branch to the
+  branch people install from (`close-the-release-cycle`).
 ---
 
 # Post-merge branch hygiene
