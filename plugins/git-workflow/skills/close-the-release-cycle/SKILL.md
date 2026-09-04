@@ -159,6 +159,10 @@ refuses to call it done on a signal that has not been checked.
 
 ## When to STOP
 
+- **`gh` is missing or unauthenticated.** Every step reads or writes through it,
+  and `git ls-remote` alone cannot tag, open a PR or move a ref. Check with `gh
+  auth status` before starting, and where it fails, say the cycle is unverified
+  rather than reporting steps you had no way to check.
 - **The repo's policy says a human merges the promotion.** Prepare it, get it
   green, hand it over. Do not merge on a general instruction to release.
 - **The comparison says `identical`.** There is nothing to release; say so
