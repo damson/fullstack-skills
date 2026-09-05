@@ -43,9 +43,23 @@ git rev-parse --verify --quiet "$REMOTE/$BASE^{commit}" >/dev/null ||
 # every git call downstream then takes the quotes literally. --untracked-files=all,
 # because the default collapses an untracked directory into one record that is not
 # a file. Under -z a rename emits the new path, then its source as the next record.
-# Git records a mode, not just bytes. An empty answer means the branch has no
-# such path at all, which never matches.
-mode_of() { if [ -L "$1" ]; then echo 120000; elif [ -x "$1" ]; then echo 100755; else echo 100644; fi; }
+# Git records a mode, not just bytes, and only two kinds of path can be compared
+# at all. A FIFO, a socket or a device is not work to rescue, and `cmp` on a FIFO
+# waits for a writer that never comes.
+mode_of()  { if [ -L "$1" ]; then echo 120000; elif [ -x "$1" ]; then echo 100755; else echo 100644; fi; }
+comparable() { [ -L "$1" ] || [ -f "$1" ]; }
+
+# True when the branch holds this path with the same mode AND the same content.
+# A symlink's content is its target TEXT: `cmp` would follow the link and compare
+# whatever it points at, so a retargeted link could read as unchanged.
+same_as_branch() {
+  bm=$(git ls-tree "$REMOTE/$BASE" -- "$1" | cut -d" " -f1)
+  [ -n "$bm" ] && [ "$bm" = "$(mode_of "$1")" ] || return 1
+  if [ -L "$1" ]
+    then [ "$(git show "$REMOTE/$BASE:$1")" = "$(readlink -- "$1")" ]
+    else git show "$REMOTE/$BASE:$1" | cmp -s -- - "$1"
+  fi
+}
 
 # Scratch goes OUTSIDE the tree being rescued: a list written into it is one
 # more untracked path for the next run to classify.
@@ -62,11 +76,9 @@ while IFS= read -r -d "" rec; do
            echo "AHEAD  $path (was $from)"; continue ;;
     "??")
       # An untracked path is not in the index, so `git diff` cannot answer for it.
-      # Compare the mode too: bytes matching while the file gained +x, or became a
-      # symlink where the branch has a regular file, is still a change, and a
-      # byte-only test calls it LANDED and throws it away.
-      if [ "$(git ls-tree "$REMOTE/$BASE" -- "$path" | cut -d" " -f1)" = "$(mode_of "$path")" ] &&
-         git show "$REMOTE/$BASE:$path" | cmp -s - "$path"
+      if ! comparable "$path"
+        then echo "SPECIAL $path — neither a regular file nor a symlink; stop and look"
+      elif same_as_branch "$path"
         then echo "LANDED $path"
         else printf '%s\0' "$path" >> "$UNTRACKED"; echo "AHEAD  $path"; fi ;;
     *D*)  printf '%s\0' "$path" >> "$TRACKED"
@@ -170,10 +182,10 @@ it puts the file outside `$DEST` entirely.
 root=$(cd "$DEST" && pwd -P)
 while IFS= read -r -d "" path; do
   [ -L "$path" ] && echo "SYMLINK $path — copied as a link; check where it points"
-  dir=$DEST/$(dirname "$path")
-  mkdir -p "$dir" || continue
+  dir=$DEST/$(dirname -- "$path")
+  mkdir -p -- "$dir" || continue
   case "$(cd "$dir" && pwd -P)" in
-    "$root"|"$root"/*) cp -P "$path" "$dir/$(basename "$path")" ;;
+    "$root"|"$root"/*) cp -P -- "$path" "$dir/$(basename -- "$path")" ;;
     *) echo "REFUSED $path — its destination resolves outside the rescue worktree" ;;
   esac
 done < "$UNTRACKED"
@@ -236,15 +248,19 @@ compare the bytes instead — that works whatever the file is, and whether or no
 git has ever seen it:
 
 ```bash
-if ! git cat-file -e "$REMOTE/$BASE:$path" 2>/dev/null; then
+if ! comparable "$path"; then
+  echo "SPECIAL $path — neither a regular file nor a symlink; stop and look"
+elif ! git cat-file -e "$REMOTE/$BASE:$path" 2>/dev/null; then
   echo "NOT ON BRANCH $path — nothing supersedes it; keep it"
 elif [ "$(git ls-tree "$REMOTE/$BASE" -- "$path" | cut -d" " -f1)" != "$(mode_of "$path")" ]; then
   echo "MODE DIFFERS $path — the bytes may match; the change is the mode. Keep it"
-elif git show "$REMOTE/$BASE:$path" | cmp -s - "$path"; then
+elif same_as_branch "$path"; then
   echo "IDENTICAL $path — discarding loses nothing"
-elif git show "$REMOTE/$BASE:$path" | grep -qI . && grep -qI . "$path"; then
-  diff <(cat "$path") <(git show "$REMOTE/$BASE:$path") | grep -c '^>'   # branch adds
-  diff <(cat "$path") <(git show "$REMOTE/$BASE:$path") | grep -c '^<'   # branch drops
+elif [ -L "$path" ]; then
+  echo "SYMLINK $path — retargeted; compare where each points, not what it reads"
+elif git show "$REMOTE/$BASE:$path" | grep -qI . && grep -qI . -- "$path"; then
+  diff <(cat -- "$path") <(git show "$REMOTE/$BASE:$path") | grep -c '^>'   # branch adds
+  diff <(cat -- "$path") <(git show "$REMOTE/$BASE:$path") | grep -c '^<'   # branch drops
 else
   echo "BINARY $path — stop; a line count cannot compare these"
 fi
