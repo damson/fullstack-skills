@@ -57,8 +57,15 @@ git fetch --prune
 git show --name-only --format= --first-parent "$mc"     # what the merge changed
 
 # The candidates: every workflow on the base branch with a push trigger.
+# `grep push:` is not the test — it matches a `paths:`-level key, and `^on:`
+# alone matches every workflow in the tree. Read the on: block and stop at the
+# next top-level key.
 for w in $(git ls-tree --name-only "origin/$base" .github/workflows/); do
-  git show "origin/$base:$w" | grep -qE '^on:|push:' && echo "$w"
+  git show "origin/$base:$w" | awk '
+      /^on:/ { inon=1; if ($0 ~ /push/) found=1; next }   # inline `on: [push]`
+      inon && /^[^[:space:]]/ { inon=0 }
+      inon && /^[[:space:]]+push:/ { found=1 }
+      END { exit !found }' && echo "$w"
 done
 git show "origin/$base:.github/workflows/<file>" | sed -n '1,40p'   # one on: block
 ```
@@ -95,8 +102,11 @@ limit the run cannot exceed:
 mins=$(git show "origin/$base:.github/workflows/<file>" | grep -oE 'timeout-minutes: *[0-9]+' | grep -oE '[0-9]+' | sort -n | tail -1)
 tries=$(( ( ${mins:-15} + 1 ) * 3 ))            # 20s per try
 
+# --event push: a workflow_dispatch run can carry the same headSha and is not
+# what the merge started. The limit is a window, not a guess: raise it on a
+# busy branch rather than assuming the run is among the first few.
 for _ in $(seq 1 "$tries"); do
-  r=$(gh run list --workflow <file> --limit 5 \
+  r=$(gh run list --workflow <file> --event push --limit 50 \
         --json databaseId,headSha,status,conclusion \
         --jq "[.[] | select(.headSha==\"$mc\")] | .[0] // empty")
   [ -n "$r" ] || { sleep 20; continue; }          # not registered yet
@@ -104,10 +114,14 @@ for _ in $(seq 1 "$tries"); do
   case "$r" in *'"status":"completed"'*) break;; esac
   sleep 20
 done
+
+# Both non-answers are answers, and neither may fall through to step 4.
+[ -n "$r" ] || { echo "no push run for $mc — check step 2 expected one"; exit 0; }
+case "$r" in *'"status":"completed"'*) ;; *) echo "still running at the bound"; exit 0;; esac
 ```
 
 ```bash
-run_id=$(printf '%s' "$r" | jq -r .databaseId)   # what step 4 reads
+run_id=$(printf '%s' "$r" | jq -r .databaseId)   # only after the two checks above
 ```
 
 Judge by `status` then `conclusion`, per the checks-watching discipline
@@ -117,8 +131,9 @@ Judge by `status` then `conclusion`, per the checks-watching discipline
   correct, say so;
 - **a run with zero jobs** — the trigger or the account refused it, not the
   code. The reason lives only in the run's annotations, not in any job log:
-  `gh api "repos/{owner}/{repo}/check-runs/$run_id/annotations"`, or
-  `gh run view "$run_id" | grep -A2 ANNOTATIONS`.
+  `gh run view "$run_id" | grep -A2 ANNOTATIONS`. Not the `check-runs`
+  API — that endpoint keys on a *check run* id, which a zero-job run does not
+  have, so the workflow run id gives a 404 that reads like a missing run.
 
 ### 4. Read the jobs, not the run
 
@@ -131,9 +146,17 @@ job. This is where the value is: an `if: failure()` notifier does not run on a
 healthy merge, so **it is still unproven** and the report must say so rather
 than implying the workflow is exercised.
 
-If a job did run, read what it printed rather than its colour. A job that
-"succeeded" having found nothing to do is a different fact from one that did
-the work.
+If a job did run, read what it printed rather than its colour, because the
+projection above carries only a conclusion and a name and those cannot tell the
+two apart:
+
+```bash
+gh run view "$run_id" --log | sed -n '/<the job name>/,$p' | head -40
+```
+
+A job that "succeeded" having found nothing to do is a different fact from one
+that did the work. Where the log is unavailable, say the job's work could not be
+determined rather than reporting the colour as the answer.
 
 ### 5. Name what the run proved, and what it did not
 

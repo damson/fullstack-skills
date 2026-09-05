@@ -42,7 +42,10 @@ cd "$W" || exit 1
 pass=0; bad=0
 
 # The one line to adapt per project. Must exit non-zero when the test fails.
-run_filter () { (cd "$W/scripts" && npx vitest run --silent -t "$1" 2>&1); }
+# Use the repo's own pinned test command. A bare `npx <runner>` resolves from
+# the registry when no local binary exists, which downloads and executes a
+# package this script never chose.
+run_filter () { (cd "$W/scripts" && npm test --silent -- -t "$1" 2>&1); }
 #   pytest:  (cd "$W" && python -m pytest -q -k "$1" 2>&1)
 #   go:      (cd "$W" && go test ./... -run "$1" 2>&1)
 
@@ -85,9 +88,19 @@ mutate () {                      # <file> <perl-expr> <filter> <label>
   if git diff --quiet -- "$1"; then echo "STALE $4"; bad=$((bad+1)); return; fi
   git diff --unified=0 -- "$1" | tail -4        # ← read this, every time
   local out code; out=$(run_filter "$3"); code=$?
-  git checkout -- "$1"
-  if [ $code -ne 0 ]; then echo "OK    $4"; pass=$((pass+1));
-  else echo "GREEN $4"; printf '%s\n' "$out" | tail -4; bad=$((bad+1)); fi
+  git checkout -- "$1" || { echo "RESTORE-FAILED $4"; bad=$((bad+1)); return 1; }
+  # Red is not proof on its own. A compile error, a missing import or a
+  # collapsed fixture also exits non-zero, and counting one as proof is how an
+  # inert guard gets reported as proved. Require the failure to name the test
+  # the filter selected.
+  if [ $code -ne 0 ] && printf '%s' "$out" | grep -qF "$3"; then
+    echo "OK    $4"; pass=$((pass+1))
+  elif [ $code -ne 0 ]; then
+    echo "WRONG-RED $4 (failed, but not in $3)"; printf '%s\n' "$out" | tail -6
+    bad=$((bad+1))
+  else
+    echo "GREEN $4"; printf '%s\n' "$out" | tail -4; bad=$((bad+1))
+  fi
 }
 ```
 
@@ -100,7 +113,9 @@ Then walk the table:
 ```bash
 for g in "${GUARDS[@]}"; do
   IFS='|' read -r file expr filter label <<< "$g"
-  mutate "$file" "$expr" "$filter" "$label"
+  # An interrupted or failed-restore mutation returns non-zero, and ignoring it
+  # lets the run reach a clean-looking tally with a mutated file still on disk.
+  mutate "$file" "$expr" "$filter" "$label" || { echo "ABORT during $label"; break; }
 done
 ```
 
@@ -122,7 +137,10 @@ went red first time" is what makes the ninth worth reading.
 
 ```bash
 echo "proved-able-to-fail: $pass   not-proved: $bad"
-git status --short          # the tree must be clean: every mutation restored
+# `git status --short` prints a dirty tree without failing on one, so a
+# mutation left behind would still exit zero. Assert emptiness instead.
+[ -z "$(git status --porcelain)" ] \
+  || { git status --short; echo "ABORT tree not restored"; exit 1; }
 [ "$bad" -eq 0 ]            # the script's own exit status
 ```
 
