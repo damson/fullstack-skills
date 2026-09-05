@@ -1,0 +1,9 @@
+# The entry-point guard dispatches; it holds no logic a test could assert. Left
+# in the report it is a permanent one-line miss in every script, which teaches
+# the reader that a miss here is normal — and that is how the miss that matters
+# goes unnoticed. Each script's argv handling lives in a `main()` the tests call
+# directly, so nothing is excused except the dispatch itself.
+[report]
+exclude_lines =
+    pragma: no cover
+    ^if __name__ == .__main__.:$
