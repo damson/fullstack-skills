@@ -92,7 +92,11 @@ for i in $(seq 1 120); do                     # 120 x 30s, a one-hour ceiling
   comm -13 <(echo "$prev") <(echo "$cur")     # emit only what newly completed
   prev=$cur
   ready=$(jq -r '.[] | select(.status=="completed") | .name' <<<"$s" | sort -u)
-  [ -z "$(comm -23 <(echo "$expected") <(echo "$ready"))" ] && { echo DONE; break; }
+  [ -n "$(comm -23 <(echo "$expected") <(echo "$ready"))" ] || {
+    red=$(comm -12 <(echo "$expected") <(jq -r \
+      '.[] | select(.status=="completed" and .conclusion!="success") | .name' <<<"$s" | sort -u))
+    [ -z "$red" ] && echo "ALL GREEN" || echo "RED: $(echo "$red" | tr '\n' ' ')"
+    break; }
   [ "$seen" = 0 ] && [ "$i" -ge 10 ] && { echo "NO RUN for $sha"; break; }
   sleep 30
 done
@@ -103,8 +107,11 @@ publishes check runs, while review bots and older third-party gates publish
 commit statuses, and neither endpoint returns the other's rows, so a watcher on
 one of them waits out its whole ceiling for a gate that already passed on the
 other. Statuses also carry their own vocabulary, `error` and `failure` where a
-check run says `failure`. The terminal condition is over the **names** step 2
-expects, never over a count: a check nobody expected can make
+check run says `failure`, and both are terminal without being a pass. So the
+loop **ends on a verdict, never on the word done**: settled is not passed is
+the third lie above, and a bare `DONE` beside a red `validate` is how a session
+commits it. The terminal condition is over the **names** step 2 expects, never
+over a count: a check nobody expected can make
 the count while the one that would have failed the PR never registered, and a
 required check behind a path filter registers never. The loop is **bounded** —
 an unreachable API or a trigger that will not fire is a report, not a longer
