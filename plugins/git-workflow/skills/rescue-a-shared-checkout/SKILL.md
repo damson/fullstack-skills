@@ -30,18 +30,35 @@ the branch you would land on, not local `HEAD`: a checkout behind its remote
 shows already-merged work as new.
 
 ```bash
-BASE=develop            # the branch this tree's work would land on
-git fetch origin --quiet
-git status --porcelain | while read -r st path; do
-  if [ "$st" = "??" ]; then
-    # An untracked path is not in the index, so `git diff` cannot answer for it.
-    if git cat-file -e "origin/$BASE:$path" 2>/dev/null &&
-       git show "origin/$BASE:$path" | diff -q - "$path" >/dev/null
-      then echo "LANDED $path"; else echo "AHEAD  $path"; fi
-  elif git diff --quiet "origin/$BASE" -- "$path"
-    then echo "LANDED $path"      # identical to the branch; discarding loses nothing
-    else echo "AHEAD  $path"
-  fi
+REMOTE=${REMOTE:-origin}
+BASE=${BASE:-develop}   # the branch this tree's work would land on
+
+# A failed fetch leaves a stale ref that still resolves, so the loop would
+# answer confidently against the wrong commit. Stop instead.
+git fetch "$REMOTE" --quiet || { echo "fetch failed; not classifying against a stale ref"; exit 1; }
+git rev-parse --verify --quiet "$REMOTE/$BASE^{commit}" >/dev/null ||
+  { echo "no such branch: $REMOTE/$BASE"; exit 1; }
+
+# -z, because the default format QUOTES a path containing a space or a quote and
+# every git call downstream then takes the quotes literally. --untracked-files=all,
+# because the default collapses an untracked directory into one record that is not
+# a file. Under -z a rename emits the new path, then its source as the next record.
+git status --porcelain=v1 -z --untracked-files=all |
+while IFS= read -r -d "" rec; do
+  st=${rec:0:2} path=${rec:3}          # XY, a space, then the path
+  case "$st" in
+    R*|C*) IFS= read -r -d "" from; echo "AHEAD  $path (was $from)"; continue ;;
+    "??")
+      # An untracked path is not in the index, so `git diff` cannot answer for it.
+      if git cat-file -e "$REMOTE/$BASE:$path" 2>/dev/null &&
+         git show "$REMOTE/$BASE:$path" | diff -q - "$path" >/dev/null
+        then echo "LANDED $path"; else echo "AHEAD  $path"; fi ;;
+    *D*)  echo "AHEAD  $path (deleted)" ;;   # a deletion is work; `cp` cannot carry it
+    *)    if git diff --quiet "$REMOTE/$BASE" -- "$path"
+            then echo "LANDED $path"   # identical to the branch; discarding loses nothing
+            else echo "AHEAD  $path"
+          fi ;;
+  esac
 done
 ```
 
@@ -78,8 +95,13 @@ stat -c '%y %n' <paths>    # GNU
 date
 ```
 
-Minutes-old timestamps mean someone is still working: say so and stop. For a
-second opinion, ask who holds the files open:
+Minutes-old timestamps mean someone is still working: say so and stop. The
+converse does not hold. **An old timestamp is evidence of nothing having been
+written, not of nobody writing** — a paused editor, a session waiting on a
+review, a job between runs all look identical to a finished one, and none of
+these checks can see a writer that resumes a second later. Treat them as
+advisory, say in the pull request which of them you ran, and where a writer can
+be asked, ask instead. For a second opinion, ask who holds the files open:
 
 ```bash
 lsof +D <dir> 2>/dev/null | awk 'NR>1 {print $1, $NF}' | sort -u
@@ -93,9 +115,31 @@ second was written by a tool in one sweep, not typed by a person.
 Never commit from the shared tree. Committing there stages files the other writer
 is still holding, and a branch cut from it inherits every unrelated edit.
 
+First check the tree is not carrying commits of its own. A worktree cut from
+the remote branch starts without them, and nothing later in this procedure
+would notice:
+
 ```bash
-git worktree add <path> -b <branch> "origin/$BASE"
-cp <each AHEAD file> <path>/<same relative path>
+git log --oneline "$REMOTE/$BASE..HEAD"    # empty, or stop and handle these first
+```
+
+Then carry the tracked changes as a **patch**, not as copies. `cp` moves file
+contents, and the classification above emits paths whose change is not content:
+a deletion, a rename, a mode bit. `git apply` reproduces all of them, and
+`--binary` keeps a changed image or fixture intact:
+
+```bash
+git worktree add "$DEST" -b <branch> "$REMOTE/$BASE"
+git diff --binary "$REMOTE/$BASE" -- <tracked AHEAD paths> | git -C "$DEST" apply --binary --index
+```
+
+Untracked paths are in no diff, so they are copied, with their directories
+created and every path quoted:
+
+```bash
+while IFS= read -r path; do
+  mkdir -p "$DEST/$(dirname "$path")" && cp "$path" "$DEST/$path"
+done < untracked-ahead.txt
 ```
 
 ### 4. Prove the copy is faithful
@@ -113,7 +157,14 @@ Between the copy and the push, the writer may have moved. Re-run step 4: an
 unchanged source means the branch captures everything, and that sentence belongs
 in the pull request rather than being assumed.
 
-### 6. Attribute honestly, and mark what you cannot verify
+### 6. Land the rescue branch from the worktree, never from the shared tree
+
+```bash
+git -C "$DEST" add -A && git -C "$DEST" commit && git -C "$DEST" push -u "$REMOTE" HEAD
+gh pr create --base "$BASE" --head <branch>
+```
+
+### 7. Attribute honestly, and mark what you cannot verify
 
 The claims in rescued work were made by someone with context you do not have.
 Land them as reported, and put the limit in the pull request as an unticked box,
@@ -126,16 +177,24 @@ where an unticked box is the point rather than an omission:
 
 A rescued claim asserted as your own finding is worse than an unrescued file.
 
-### 7. Only then discard, and re-classify first
+### 8. Only then discard, and re-classify first
 
 After the branch merges, the shared tree's copies are usually **stale**, not
 ahead: review findings will have improved them on the branch. Stale and ahead
 look identical to `git status`, so run step 1 again against the updated branch
 before discarding anything, and check the direction:
 
+Ask what kind of file it is first. `diff` answers a binary difference with one
+line about the files, so counting `<` and `>` returns zero for both and reads
+exactly like "identical" — the answer that authorises the discard:
+
 ```bash
-diff <(cat <path>) <(git show "origin/$BASE:<path>") | grep -c '^>'   # branch adds
-diff <(cat <path>) <(git show "origin/$BASE:<path>") | grep -c '^<'   # branch drops
+if [ "$(git diff --numstat "$REMOTE/$BASE" -- "$path" | cut -f1)" = "-" ]; then
+  echo "BINARY $path — stop; a line count cannot compare these"
+else
+  diff <(cat "$path") <(git show "$REMOTE/$BASE:$path") | grep -c '^>'   # branch adds
+  diff <(cat "$path") <(git show "$REMOTE/$BASE:$path") | grep -c '^<'   # branch drops
+fi
 ```
 
 A branch that only adds supersedes the copy. A branch that drops lines the copy

@@ -32,12 +32,17 @@ Seven dirty paths in a checkout two sessions share.
    been fast-forwarded. Nothing is lost by discarding those. Three are genuinely
    ahead. Expect this ratio; it is the reason the naive "commit everything" move
    creates so much noise.
-2. **Check the writer has stopped.** `stat` against `date` shows the newest file
-   written eighteen minutes ago, so the rescue is safe. Two other files share one
+2. **Check whether the writer has stopped, and treat the answer as advisory.**
+   `stat` against `date` shows the newest file written eighteen minutes ago, and
+   `lsof` shows nothing holding them. Neither proves nobody is writing, only that
+   nothing was written recently, so the pull request records which checks were
+   run rather than claiming the tree was quiet. Two other files share one
    timestamp to the second: not typed, but written in a sweep by a tool, which is
    worth knowing before attributing them to a person.
-3. **Copy into a worktree cut from `origin/develop`**, never committing from the
-   shared tree, and `diff -q` each copy.
+3. **Carry the work into a worktree cut from `origin/develop`**, never
+   committing from the shared tree: tracked changes as a patch, so a deletion, a
+   rename and a mode bit survive where `cp` would drop them, and untracked files
+   copied alongside. Then `diff -q` each one.
 4. **Re-check the source before pushing.** Unchanged, so the branch captures
    everything, and the pull request says so rather than assuming it.
 5. **Say what you did not verify.** The claims came from someone else's session;
