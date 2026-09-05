@@ -43,6 +43,10 @@ git rev-parse --verify --quiet "$REMOTE/$BASE^{commit}" >/dev/null ||
 # every git call downstream then takes the quotes literally. --untracked-files=all,
 # because the default collapses an untracked directory into one record that is not
 # a file. Under -z a rename emits the new path, then its source as the next record.
+# Git records a mode, not just bytes. An empty answer means the branch has no
+# such path at all, which never matches.
+mode_of() { if [ -L "$1" ]; then echo 120000; elif [ -x "$1" ]; then echo 100755; else echo 100644; fi; }
+
 # Scratch goes OUTSIDE the tree being rescued: a list written into it is one
 # more untracked path for the next run to classify.
 WORK=$(mktemp -d); TRACKED=$WORK/tracked-ahead; UNTRACKED=$WORK/untracked-ahead
@@ -58,8 +62,11 @@ while IFS= read -r -d "" rec; do
            echo "AHEAD  $path (was $from)"; continue ;;
     "??")
       # An untracked path is not in the index, so `git diff` cannot answer for it.
-      if git cat-file -e "$REMOTE/$BASE:$path" 2>/dev/null &&
-         git show "$REMOTE/$BASE:$path" | diff -q - "$path" >/dev/null
+      # Compare the mode too: bytes matching while the file gained +x, or became a
+      # symlink where the branch has a regular file, is still a change, and a
+      # byte-only test calls it LANDED and throws it away.
+      if [ "$(git ls-tree "$REMOTE/$BASE" -- "$path" | cut -d" " -f1)" = "$(mode_of "$path")" ] &&
+         git show "$REMOTE/$BASE:$path" | cmp -s - "$path"
         then echo "LANDED $path"
         else printf '%s\0' "$path" >> "$UNTRACKED"; echo "AHEAD  $path"; fi ;;
     *D*)  printf '%s\0' "$path" >> "$TRACKED"
@@ -154,10 +161,21 @@ it `cp` follows the link and copies whatever it points at, so an untracked link
 aimed outside the repository puts that file's contents in the branch, and the
 push publishes them.
 
+`cp -P` guards the source. The destination needs its own guard: a directory
+component that is a symlink **on the branch** — `fixtures -> /var/tmp/shared`,
+committed long ago — is recreated in the rescue worktree, and writing through
+it puts the file outside `$DEST` entirely.
+
 ```bash
+root=$(cd "$DEST" && pwd -P)
 while IFS= read -r -d "" path; do
   [ -L "$path" ] && echo "SYMLINK $path — copied as a link; check where it points"
-  mkdir -p "$DEST/$(dirname "$path")" && cp -P "$path" "$DEST/$path"
+  dir=$DEST/$(dirname "$path")
+  mkdir -p "$dir" || continue
+  case "$(cd "$dir" && pwd -P)" in
+    "$root"|"$root"/*) cp -P "$path" "$dir/$(basename "$path")" ;;
+    *) echo "REFUSED $path — its destination resolves outside the rescue worktree" ;;
+  esac
 done < "$UNTRACKED"
 ```
 
@@ -220,6 +238,8 @@ git has ever seen it:
 ```bash
 if ! git cat-file -e "$REMOTE/$BASE:$path" 2>/dev/null; then
   echo "NOT ON BRANCH $path — nothing supersedes it; keep it"
+elif [ "$(git ls-tree "$REMOTE/$BASE" -- "$path" | cut -d" " -f1)" != "$(mode_of "$path")" ]; then
+  echo "MODE DIFFERS $path — the bytes may match; the change is the mode. Keep it"
 elif git show "$REMOTE/$BASE:$path" | cmp -s - "$path"; then
   echo "IDENTICAL $path — discarding loses nothing"
 elif git show "$REMOTE/$BASE:$path" | grep -qI . && grep -qI . "$path"; then
