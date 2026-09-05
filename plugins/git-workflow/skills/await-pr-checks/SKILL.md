@@ -71,9 +71,11 @@ rewrote it six times. This shape survived every PR of that session. Fill the
 three values from steps 1 and 2, then paste the rest unchanged:
 
 ```bash
-repo=<owner>/<repo>
-sha=$(gh pr view <n> --repo "$repo" --json headRefOid --jq .headRefOid)
+repo=owner/name                               # fill these three in
+pr=123
 expected=$(printf '%s\n' validate codecov/patch codecov/project | sort)
+
+sha=$(gh pr view "$pr" --repo "$repo" --json headRefOid --jq .headRefOid)
 
 prev=""; seen=0
 for i in $(seq 1 120); do                     # 120 x 30s, a one-hour ceiling
