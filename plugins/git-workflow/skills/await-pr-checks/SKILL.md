@@ -77,8 +77,14 @@ expected=$(printf '%s\n' validate codecov/patch codecov/project | sort)
 
 prev=""; seen=0
 for i in $(seq 1 120); do                     # 120 x 30s, a one-hour ceiling
-  s=$(gh api "repos/$repo/commits/$sha/check-runs" \
-        --jq '[.check_runs[] | {name, status, conclusion}]' 2>/dev/null) || s='[]'
+  runs=$(gh api "repos/$repo/commits/$sha/check-runs" \
+           --jq '.check_runs[] | {name, status, conclusion}' 2>/dev/null)
+  # a review bot or third-party gate posts a legacy commit status, which the
+  # check-runs endpoint does not return at all
+  stat=$(gh api "repos/$repo/commits/$sha/status" \
+           --jq '.statuses[] | {name: .context, conclusion: .state,
+                 status: (if .state == "pending" then "queued" else "completed" end)}' 2>/dev/null)
+  s=$(printf '%s\n%s\n' "$runs" "$stat" | jq -s '.')
   [ "$(jq -r length <<<"$s")" -gt 0 ] && seen=1
   cur=$(jq -r '.[] | select(.status=="completed") | "\(.name): \(.conclusion)"' <<<"$s" | sort)
   comm -13 <(echo "$prev") <(echo "$cur")     # emit only what newly completed
@@ -90,8 +96,13 @@ for i in $(seq 1 120); do                     # 120 x 30s, a one-hour ceiling
 done
 ```
 
-Three things in it are load-bearing. The terminal condition is over the
-**names** step 2 expects, never over a count: a check nobody expected can make
+Four things in it are load-bearing. It reads **both** surfaces: GitHub Actions
+publishes check runs, while review bots and older third-party gates publish
+commit statuses, and neither endpoint returns the other's rows, so a watcher on
+one of them waits out its whole ceiling for a gate that already passed on the
+other. Statuses also carry their own vocabulary, `error` and `failure` where a
+check run says `failure`. The terminal condition is over the **names** step 2
+expects, never over a count: a check nobody expected can make
 the count while the one that would have failed the PR never registered, and a
 required check behind a path filter registers never. The loop is **bounded** —
 an unreachable API or a trigger that will not fire is a report, not a longer
@@ -99,8 +110,8 @@ wait, so the counted `for` gives it a ceiling and the `seen` flag turns five
 quiet minutes into the diagnostic *When to STOP* asks for. And `expected` is
 built with `printf`, because an unquoted `$list` does not word-split in zsh.
 
-After a rerun, the newest attempt is already the one you get: this endpoint
-filters to `latest` by default and returns one entry per check name, so an old
+After a rerun, the newest attempt is already the one you get: the check-runs
+endpoint filters to `latest` by default and returns one entry per name, so an old
 failure beside a green rerun is not something the loop has to reason about.
 Only `?filter=all` returns every attempt, and only then do you need to pick:
 
