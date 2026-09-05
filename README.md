@@ -11,7 +11,7 @@ you don't have to win them the hard way too.*
 [![Coverage](https://codecov.io/gh/damson/hard-won-skills/branch/develop/graph/badge.svg)](https://codecov.io/gh/damson/hard-won-skills/branch/develop)
 [![Made for Claude Code](https://img.shields.io/badge/made%20for-Claude%20Code-d97757.svg)](https://claude.com/claude-code)
 
-👋 **Welcome!** This is a marketplace of **37 skills in 5 themed plugins**:
+👋 **Welcome!** This is a marketplace of **38 skills in 5 themed plugins**:
 small, careful procedures your agent picks up automatically when a task calls
 for them: rebasing a stack of PRs without losing one, proving a screenshot test
 actually compared pixels, probing a migration without leaving a trace.
@@ -58,7 +58,7 @@ example; start with any link below.
 
 | Plugin | Skills | What it is for |
 |---|---|---|
-| **[git-workflow](plugins/git-workflow/README.md)** | 15 | Branch, worktree and pull-request hygiene |
+| **[git-workflow](plugins/git-workflow/README.md)** | 16 | Branch, worktree and pull-request hygiene |
 | **[agent-config](plugins/agent-config/README.md)** | 9 | Writing and auditing agent instruction files |
 | **[verification](plugins/verification/README.md)** | 4 | Proving a check can fail before trusting it |
 | **[data-safety](plugins/data-safety/README.md)** | 5 | Writes that are hard to undo |
@@ -88,7 +88,10 @@ those stops short of: press the merge button itself, once the go-ahead is
 confirmed to still cover this pull request at this commit. And the one that
 picks up where all of them end: the `on: push` run the merge starts, which is
 the first and only exercise of merge-time credentials, and where "nothing ran"
-and "nothing was supposed to run" look identical afterwards.
+and "nothing was supposed to run" look identical afterwards. And one for the
+tree itself rather than its history: uncommitted changes in a checkout more than
+one writer touches, where discarding destroys work nobody can recover and
+committing everything lands somebody's half-written draft under your name.
 
 [`branch-hygiene`](plugins/git-workflow/skills/branch-hygiene/README.md) ·
 [`pr-comment-loop`](plugins/git-workflow/skills/pr-comment-loop/README.md) ·
@@ -104,7 +107,8 @@ and "nothing was supposed to run" look identical afterwards.
 [`wire-scheduled-workflow`](plugins/git-workflow/skills/wire-scheduled-workflow/README.md) ·
 [`close-the-release-cycle`](plugins/git-workflow/skills/close-the-release-cycle/README.md) ·
 [`merge-on-go-ahead`](plugins/git-workflow/skills/merge-on-go-ahead/README.md) ·
-[`watch-what-the-merge-triggered`](plugins/git-workflow/skills/watch-what-the-merge-triggered/README.md)
+[`watch-what-the-merge-triggered`](plugins/git-workflow/skills/watch-what-the-merge-triggered/README.md) ·
+[`rescue-a-shared-checkout`](plugins/git-workflow/skills/rescue-a-shared-checkout/README.md)
 
 ### agent-config
 
