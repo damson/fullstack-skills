@@ -1,6 +1,6 @@
 # git-workflow
 
-Branch, worktree and pull-request hygiene: thirteen skills for the moments where
+Branch, worktree and pull-request hygiene: 15 skills for the moments where
 git and GitHub quietly do something other than what everyone at the keyboard
 believed.
 
@@ -34,6 +34,7 @@ happen.
 | [`wire-scheduled-workflow`](skills/wire-scheduled-workflow/README.md) | Check a cron workflow is actually registered: GitHub only arms schedules from the default branch |
 | [`close-the-release-cycle`](skills/close-the-release-cycle/README.md) | Run a release to completion: promote, tag, move the floating tag, back-merge, and prove each one happened |
 | [`merge-on-go-ahead`](skills/merge-on-go-ahead/README.md) | Merge only what the user authorised, at the head they authorised, in the method the repo prefers, waiting out the recomputation between dependent merges |
+| [`watch-what-the-merge-triggered`](skills/watch-what-the-merge-triggered/README.md) | Watch the `on: push` run a merge starts, pinned to the merge commit: the first and only exercise of merge-time credentials |
 
 Each skill's README carries its triggers and a worked example; the `SKILL.md`
 beside it is the procedure the agent follows.
