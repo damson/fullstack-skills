@@ -27,6 +27,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from typing import NamedTuple
 
 # A fence opens on its own line, so a ``` appearing inside a line of code -- a
 # regex matching mermaid fences, say -- does not close the block early.
@@ -54,8 +55,22 @@ def closes(marker: str, line: str) -> bool:
     return bool(closing) and closing.group(1)[0] == marker[0] and len(closing.group(1)) >= len(marker)
 
 
+class Block(NamedTuple):
+    """One fenced block: where it opens, its dedented body, and its language."""
+
+    line: int
+    code: str
+    lang: str
+    closed: bool
+
+
 def iter_blocks(text: str):
-    """Yield (line number of the opening fence, dedented code) per shell block."""
+    """Yield a Block per shell block, plus any fence left unterminated.
+
+    An unterminated fence is reported whatever its language: it swallows the
+    rest of the document, so every shell block after it disappears from the
+    walk, and the file passes for having nothing left to check.
+    """
     lines = text.splitlines()
     i = 0
     while i < len(lines):
@@ -69,10 +84,14 @@ def iter_blocks(text: str):
         while j < len(lines) and not closes(marker, lines[j]):
             body.append(lines[j])
             j += 1
-        if lang.lower() in SHELL_LANGS:
+        closed = j < len(lines)
+        if lang.lower() in SHELL_LANGS or not closed:
             strip = len(indent)
-            yield i + 1, "\n".join(
-                line[strip:] if line[:strip].isspace() else line for line in body
+            yield Block(
+                i + 1,
+                "\n".join(line[strip:] if line[:strip].isspace() else line for line in body),
+                lang.lower(),
+                closed,
             )
         i = j + 1
 
@@ -99,17 +118,23 @@ def check(root: Path) -> int:
     sources = sorted(root.glob("plugins/*/skills/*/*.md")) or sorted(root.glob("**/*.md"))
     blocks = failures = 0
     for source in sources:
-        for lineno, code in iter_blocks(source.read_text()):
+        for block in iter_blocks(source.read_text()):
+            rel = source.relative_to(root) if source.is_relative_to(root) else source
+            if not block.closed:
+                failures += 1
+                opened = f"{block.lang} fence" if block.lang else "fence"
+                print(f"✘ {rel}:{block.line} — unterminated {opened}", file=sys.stderr)
+                continue
             blocks += 1
-            complaint = parse_error(code)
+            complaint = parse_error(block.code)
             if complaint is None:
                 continue
             failures += 1
-            rel = source.relative_to(root) if source.is_relative_to(root) else source
-            print(f"✘ {rel}:{lineno} — {complaint}", file=sys.stderr)
-            print(f"    {code.strip().splitlines()[0][:76]}", file=sys.stderr)
+            print(f"✘ {rel}:{block.line} — {complaint}", file=sys.stderr)
+            print(f"    {block.code.strip().splitlines()[0][:76]}", file=sys.stderr)
     if failures:
-        print(f"\n✘ {failures} of {blocks} shell block(s) do not parse", file=sys.stderr)
+        checked = f"{blocks} shell block(s) checked" if blocks else "no shell block reached"
+        print(f"\n✘ {failures} problem(s); {checked}", file=sys.stderr)
         return 1
     print(f"✔ {blocks} shell block(s) parse under bash -n")
     return 0
