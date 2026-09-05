@@ -67,35 +67,45 @@ session:
 ## A known-good watcher
 
 Hand-rolling the loop is where the three lies creep in, and one session
-rewrote it six times. This shape survived every PR of that session; adapt
-names, keep the rules (pinned SHA, newest attempt, completed-only, judged
-conclusions):
+rewrote it six times. This shape survived every PR of that session. Fill the
+three values from steps 1 and 2, then paste the rest unchanged:
 
 ```bash
-sha=<pinned head>   # from step 1, never re-read inside the loop
-prev=""
-while true; do
-  s=$(gh api "repos/<owner>/<repo>/commits/$sha/check-runs" \
-        --jq '[.check_runs[] | {name, status, conclusion}]' 2>/dev/null) \
-    || { sleep 30; continue; }
+repo=<owner>/<repo>
+sha=$(gh pr view <n> --repo "$repo" --json headRefOid --jq .headRefOid)
+expected=$(printf '%s\n' validate codecov/patch codecov/project | sort)
+
+prev=""; seen=0
+for i in $(seq 1 120); do                     # 120 x 30s, a one-hour ceiling
+  s=$(gh api "repos/$repo/commits/$sha/check-runs" \
+        --jq '[.check_runs[] | {name, status, conclusion}]' 2>/dev/null) || s='[]'
+  [ "$(jq -r length <<<"$s")" -gt 0 ] && seen=1
   cur=$(jq -r '.[] | select(.status=="completed") | "\(.name): \(.conclusion)"' <<<"$s" | sort)
-  comm -13 <(echo "$prev") <(echo "$cur")   # emit only what newly completed
+  comm -13 <(echo "$prev") <(echo "$cur")     # emit only what newly completed
   prev=$cur
-  pending=$(jq -r '[.[] | select(.status!="completed")] | length' <<<"$s")
-  n=$(jq -r 'length' <<<"$s")
-  # n >= <expected count> guards the race where the loop starts before all
-  # checks have registered: zero pending over an empty list is not done.
-  [ "$pending" = "0" ] && [ "$n" -ge <expected count> ] && { echo DONE; break; }
+  ready=$(jq -r '.[] | select(.status=="completed") | .name' <<<"$s" | sort -u)
+  [ -z "$(comm -23 <(echo "$expected") <(echo "$ready"))" ] && { echo DONE; break; }
+  [ "$seen" = 0 ] && [ "$i" -ge 10 ] && { echo "NO RUN for $sha"; break; }
   sleep 30
 done
 ```
 
-For the final verdict after reruns (a PR-body edit, a manual re-run), judge
-the NEWEST attempt of each check by start time; an old failure with a green
-rerun beside it is not red:
+Three things in it are load-bearing. The terminal condition is over the
+**names** step 2 expects, never over a count: a check nobody expected can make
+the count while the one that would have failed the PR never registered, and a
+required check behind a path filter registers never. The loop is **bounded** —
+an unreachable API or a trigger that will not fire is a report, not a longer
+wait, so the counted `for` gives it a ceiling and the `seen` flag turns five
+quiet minutes into the diagnostic *When to STOP* asks for. And `expected` is
+built with `printf`, because an unquoted `$list` does not word-split in zsh.
+
+After a rerun, the newest attempt is already the one you get: this endpoint
+filters to `latest` by default and returns one entry per check name, so an old
+failure beside a green rerun is not something the loop has to reason about.
+Only `?filter=all` returns every attempt, and only then do you need to pick:
 
 ```bash
-gh api "repos/<owner>/<repo>/commits/$sha/check-runs" --jq \
+gh api "repos/$repo/commits/$sha/check-runs?filter=all" --jq \
   '[.check_runs[] | select(.status=="completed")] | group_by(.name)
    | map(max_by(.started_at)) | .[] | .name + " :: " + .conclusion'
 ```
