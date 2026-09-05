@@ -30,7 +30,14 @@ from pathlib import Path
 
 # A fence opens on its own line, so a ``` appearing inside a line of code -- a
 # regex matching mermaid fences, say -- does not close the block early.
-FENCE = re.compile(r"^(\s*)```(\w*)\s*$")
+#
+# Markdown fences are three or more backticks OR three or more tildes, and a
+# block closes only on the same character, at least as long, carrying no info
+# string. A checker that recognises only the exact three-backtick form does not
+# report the others as bad: it skips them, and reports success for a file it
+# never read.
+OPENING = re.compile(r"^(\s*)(`{3,}|~{3,})[ \t]*([^`\s]*)[ \t]*$")
+CLOSING = re.compile(r"^\s*(`{3,}|~{3,})[ \t]*$")
 
 # `<name>`, `<owner>/<repo>`, `<commit-to-drop>`. Anchored to a letter so that
 # process substitution `<(...)`, here-strings `<<<`, and `<!doctype` are left
@@ -41,22 +48,28 @@ PLACEHOLDER = re.compile(r"<[A-Za-z][^<>\n]*>")
 SHELL_LANGS = {"bash", "sh", "shell"}
 
 
+def closes(marker: str, line: str) -> bool:
+    """True when `line` ends a block opened with `marker`."""
+    closing = CLOSING.match(line)
+    return bool(closing) and closing.group(1)[0] == marker[0] and len(closing.group(1)) >= len(marker)
+
+
 def iter_blocks(text: str):
     """Yield (line number of the opening fence, dedented code) per shell block."""
     lines = text.splitlines()
     i = 0
     while i < len(lines):
-        opening = FENCE.match(lines[i])
+        opening = OPENING.match(lines[i])
         if not opening:
             i += 1
             continue
-        indent, lang = opening.group(1), opening.group(2)
+        indent, marker, lang = opening.group(1), opening.group(2), opening.group(3)
         body: list[str] = []
         j = i + 1
-        while j < len(lines) and not FENCE.match(lines[j]):
+        while j < len(lines) and not closes(marker, lines[j]):
             body.append(lines[j])
             j += 1
-        if lang in SHELL_LANGS:
+        if lang.lower() in SHELL_LANGS:
             strip = len(indent)
             yield i + 1, "\n".join(
                 line[strip:] if line[:strip].isspace() else line for line in body
@@ -102,5 +115,10 @@ def check(root: Path) -> int:
     return 0
 
 
-if __name__ == "__main__":
-    sys.exit(check(Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).parent.parent))
+def main(argv: list[str] | None = None) -> int:
+    args = sys.argv[1:] if argv is None else argv
+    return check(Path(args[0]) if args else Path(__file__).resolve().parent.parent)
+
+
+if __name__ == "__main__":  # pragma: no cover
+    sys.exit(main())

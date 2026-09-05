@@ -5,6 +5,8 @@ so every rule below is stated as a block that breaks it.
 """
 
 import importlib.util
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -72,6 +74,43 @@ def test_every_shell_info_string_is_collected(lang):
     assert len(list(vsb.iter_blocks(md("echo hi", lang=lang)))) == 1
 
 
+# A fence this checker does not recognise is not reported as bad, it is skipped,
+# and the file reports success without ever having been read.
+
+@pytest.mark.parametrize(
+    "opener,closer",
+    [("```bash", "```"), ("````bash", "````"), ("~~~bash", "~~~"), ("`````bash", "`````")],
+)
+def test_every_fence_length_and_character_is_collected(opener, closer):
+    text = f"Prose.\n\n{opener}\nfor i in 1; do\n{closer}\n\nProse.\n"
+    blocks = [code for _, code in vsb.iter_blocks(text)]
+    assert blocks == ["for i in 1; do"]
+    assert vsb.parse_error(blocks[0]) is not None
+
+
+def test_a_block_does_not_close_on_the_other_fence_character():
+    text = "```bash\n~~~\necho hi\n```\n"
+    assert [c for _, c in vsb.iter_blocks(text)] == ["~~~\necho hi"]
+
+
+def test_a_block_does_not_close_on_a_shorter_run_of_the_same_character():
+    text = "````bash\n```\necho hi\n````\n"
+    assert [c for _, c in vsb.iter_blocks(text)] == ["```\necho hi"]
+
+
+def test_a_longer_closer_still_closes():
+    assert [c for _, c in vsb.iter_blocks("```bash\necho hi\n`````\n")] == ["echo hi"]
+
+
+def test_an_info_string_does_not_close_a_block():
+    text = "```bash\necho one\n```bash\n"
+    assert [c for _, c in vsb.iter_blocks(text)] == ["echo one\n```bash"]
+
+
+def test_the_info_string_is_matched_case_insensitively():
+    assert len(list(vsb.iter_blocks("```Bash\necho hi\n```\n"))) == 1
+
+
 def test_a_fence_inside_a_line_does_not_close_the_block():
     # The mermaid audit skill really does match ``` inside a regex literal.
     code = 'src.matchAll(/```mermaid\\n([\\s\\S]*?)```/g)\necho done\n'
@@ -109,6 +148,26 @@ def test_check_passes_a_clean_tree(tmp_path, capsys):
     (skill / "SKILL.md").write_text(md("git fetch <url> <branch>"))
     assert vsb.check(tmp_path) == 0
     assert "1 shell block(s) parse" in capsys.readouterr().out
+
+
+def test_main_defaults_to_the_repository_root(capsys):
+    assert vsb.main([]) == 0
+    assert "shell block(s) parse" in capsys.readouterr().out
+
+
+def test_main_accepts_a_directory_argument(tmp_path, capsys):
+    (tmp_path / "SKILL.md").write_text(md("for i in 1; do\n  echo $i\n"))
+    assert vsb.main([str(tmp_path)]) == 1
+    assert "SKILL.md" in capsys.readouterr().err
+
+
+def test_the_script_runs_as_a_command(tmp_path):
+    script = Path(__file__).parent.parent / "scripts" / "validate-shell-blocks.py"
+    (tmp_path / "SKILL.md").write_text(md("echo fine <placeholder>"))
+    done = subprocess.run(
+        [sys.executable, str(script), str(tmp_path)], capture_output=True, text=True
+    )
+    assert done.returncode == 0 and "1 shell block(s) parse" in done.stdout
 
 
 def test_this_marketplace_parses():
