@@ -111,9 +111,10 @@
     Evidence, not intentions. Every ticked box must name something you
     actually observed.
 
-    - [ ] Automated checks pass: `./scripts/validate-skills.sh` and
-          `python3 scripts/validate-marketplace.py` (the same two commands CI
-          runs; no token, network or special tooling needed)
+    - [ ] Automated checks pass: `./scripts/validate-skills.sh`,
+          `python3 scripts/validate-marketplace.py` and
+          `python3 scripts/validate-shell-blocks.py` (the same three commands
+          CI runs; no token, network or special tooling needed)
     - [ ] New or updated tests cover the change (state the before → after count)
     - [ ] CI is green (name the jobs)
     - [ ] Verified end-to-end against real data or a running instance, not

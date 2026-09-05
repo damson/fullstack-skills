@@ -123,3 +123,12 @@ harness knows nothing about: that `marketplace.json` lists every plugin
 directory and no phantom ones, that each `plugin.json` name matches its folder
 and carries a semver version, and that the README's per-plugin skill counts and
 skill lists still match the tree.
+
+`scripts/validate-shell-blocks.py` has no upstream either. It parses every
+fenced shell block in every skill with `bash -n`, which never executes them.
+The blocks are what a reader pastes into a terminal, and nothing else here
+reads them: an unbalanced quote or an unterminated loop ships green and is
+found by whoever tries to follow the step. Angle-bracket placeholders are
+substituted before parsing, because `git fetch <url> <branch>` is how these
+skills say what to fill in and bash reads `<url>` as a redirect. So it catches
+malformed shell, not a badly chosen placeholder.
