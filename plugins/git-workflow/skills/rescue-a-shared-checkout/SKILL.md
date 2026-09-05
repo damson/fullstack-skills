@@ -43,24 +43,38 @@ git rev-parse --verify --quiet "$REMOTE/$BASE^{commit}" >/dev/null ||
 # every git call downstream then takes the quotes literally. --untracked-files=all,
 # because the default collapses an untracked directory into one record that is not
 # a file. Under -z a rename emits the new path, then its source as the next record.
+# Scratch goes OUTSIDE the tree being rescued: a list written into it is one
+# more untracked path for the next run to classify.
+WORK=$(mktemp -d); TRACKED=$WORK/tracked-ahead; UNTRACKED=$WORK/untracked-ahead
+: > "$TRACKED"; : > "$UNTRACKED"
+
 git status --porcelain=v1 -z --untracked-files=all |
 while IFS= read -r -d "" rec; do
   st=${rec:0:2} path=${rec:3}          # XY, a space, then the path
   case "$st" in
-    R*|C*) IFS= read -r -d "" from; echo "AHEAD  $path (was $from)"; continue ;;
+    # Both sides go in the patch, or the rename lands as an add beside the old file.
+    R*|C*) IFS= read -r -d "" from
+           printf '%s\0%s\0' "$path" "$from" >> "$TRACKED"
+           echo "AHEAD  $path (was $from)"; continue ;;
     "??")
       # An untracked path is not in the index, so `git diff` cannot answer for it.
       if git cat-file -e "$REMOTE/$BASE:$path" 2>/dev/null &&
          git show "$REMOTE/$BASE:$path" | diff -q - "$path" >/dev/null
-        then echo "LANDED $path"; else echo "AHEAD  $path"; fi ;;
-    *D*)  echo "AHEAD  $path (deleted)" ;;   # a deletion is work; `cp` cannot carry it
+        then echo "LANDED $path"
+        else printf '%s\0' "$path" >> "$UNTRACKED"; echo "AHEAD  $path"; fi ;;
+    *D*)  printf '%s\0' "$path" >> "$TRACKED"
+          echo "AHEAD  $path (deleted)" ;;   # a deletion is work; `cp` cannot carry it
     *)    if git diff --quiet "$REMOTE/$BASE" -- "$path"
             then echo "LANDED $path"   # identical to the branch; discarding loses nothing
-            else echo "AHEAD  $path"
+            else printf '%s\0' "$path" >> "$TRACKED"; echo "AHEAD  $path"
           fi ;;
   esac
 done
 ```
+
+The two NUL-delimited lists are what step 3 consumes; the printed lines are for
+you. Read them before going on — this is the review the whole procedure exists
+to make possible.
 
 Run it in `bash`: in some shells the piped loop body loses its environment and
 every `git` call fails, which reads as a clean tree.
@@ -130,16 +144,21 @@ a deletion, a rename, a mode bit. `git apply` reproduces all of them, and
 
 ```bash
 git worktree add "$DEST" -b <branch> "$REMOTE/$BASE"
-git diff --binary "$REMOTE/$BASE" -- <tracked AHEAD paths> | git -C "$DEST" apply --binary --index
+xargs -0 git diff --binary "$REMOTE/$BASE" -- < "$TRACKED" |
+  git -C "$DEST" apply --binary --index
 ```
 
 Untracked paths are in no diff, so they are copied, with their directories
-created and every path quoted:
+created and every path quoted. `cp -P` copies a symlink **as a link**: without
+it `cp` follows the link and copies whatever it points at, so an untracked link
+aimed outside the repository puts that file's contents in the branch, and the
+push publishes them.
 
 ```bash
-while IFS= read -r path; do
-  mkdir -p "$DEST/$(dirname "$path")" && cp "$path" "$DEST/$path"
-done < untracked-ahead.txt
+while IFS= read -r -d "" path; do
+  [ -L "$path" ] && echo "SYMLINK $path — copied as a link; check where it points"
+  mkdir -p "$DEST/$(dirname "$path")" && cp -P "$path" "$DEST/$path"
+done < "$UNTRACKED"
 ```
 
 ### 4. Prove the copy is faithful
@@ -159,9 +178,15 @@ in the pull request rather than being assumed.
 
 ### 6. Land the rescue branch from the worktree, never from the shared tree
 
+Chain it, so a failed stage or a rejected push cannot be followed by a pull
+request describing work that never left the machine, and give `commit` its
+message rather than letting it open an editor nothing is watching:
+
 ```bash
-git -C "$DEST" add -A && git -C "$DEST" commit && git -C "$DEST" push -u "$REMOTE" HEAD
-gh pr create --base "$BASE" --head <branch>
+git -C "$DEST" add -A &&
+  git -C "$DEST" commit -m "Rescue uncommitted work from the shared checkout" &&
+  git -C "$DEST" push -u "$REMOTE" HEAD &&
+  gh pr create --base "$BASE" --head <branch>
 ```
 
 ### 7. Attribute honestly, and mark what you cannot verify
@@ -188,12 +213,20 @@ Ask what kind of file it is first. `diff` answers a binary difference with one
 line about the files, so counting `<` and `>` returns zero for both and reads
 exactly like "identical" — the answer that authorises the discard:
 
+`git diff --numstat` cannot answer for a path that is still untracked here, so
+compare the bytes instead — that works whatever the file is, and whether or not
+git has ever seen it:
+
 ```bash
-if [ "$(git diff --numstat "$REMOTE/$BASE" -- "$path" | cut -f1)" = "-" ]; then
-  echo "BINARY $path — stop; a line count cannot compare these"
-else
+if ! git cat-file -e "$REMOTE/$BASE:$path" 2>/dev/null; then
+  echo "NOT ON BRANCH $path — nothing supersedes it; keep it"
+elif git show "$REMOTE/$BASE:$path" | cmp -s - "$path"; then
+  echo "IDENTICAL $path — discarding loses nothing"
+elif git show "$REMOTE/$BASE:$path" | grep -qI . && grep -qI . "$path"; then
   diff <(cat "$path") <(git show "$REMOTE/$BASE:$path") | grep -c '^>'   # branch adds
   diff <(cat "$path") <(git show "$REMOTE/$BASE:$path") | grep -c '^<'   # branch drops
+else
+  echo "BINARY $path — stop; a line count cannot compare these"
 fi
 ```
 
