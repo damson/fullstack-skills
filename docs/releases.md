@@ -55,7 +55,7 @@ you cannot release nothing.
 Marketplace tags are CalVer and plugin versions are semver on purpose. The tag
 answers *when*; a plugin's version answers *what changed in it*.
 
-## Three couplings that will not announce themselves
+## Four couplings that will not announce themselves
 
 **The propose job needs a repository setting that is off by default.** It opens
 the release PR with `GITHUB_TOKEN`, which requires *Settings → Actions →
@@ -82,6 +82,25 @@ mechanical guard is a repository ruleset restricting merges into `main` to
 merge commits (Settings → Rules, a `pull_request` rule with
 `allowed_merge_methods: ["merge"]`); prose warnings do not gate UI buttons.
 
+**The release PR's own CI run is killed by its own merge.** Auto-merge is
+enabled the moment the `validate` status is posted, so the pull-request run
+starts and the merge lands about a second later; GitHub drops the merge ref
+under the running job and records the run as `failure` with zero jobs and no
+logs. The timestamps are unambiguous, and they were the only way to tell this
+apart from a workflow that was never allowed to start: across the three release
+PRs to date the run was created one second **before** the merge and updated
+within a second **after** it (#60 merged 01:58:03Z, run 01:58:02Z to
+01:58:04Z). Compare a zero-job run's `updated_at` with the PR's `merged_at`
+before diagnosing anything else, here or anywhere.
+
+That run gates nothing, which is why the propose job runs the two
+validators itself and posts the result as the `validate` status on the same
+head commit. Read a release PR's checks, not the Actions tab; and since
+2026-09-04 `ci.yml` ignores pull requests into `main` so the phantom row is not
+created at all. A hotfix PR into `main` from a branch other than `develop`
+therefore needs `validate` from a `workflow_dispatch` run on that branch, which
+lands on the same commit and satisfies protection.
+
 ## Holding a release
 
 Close the release PR. The next run reopens one when the cadence comes round
@@ -91,7 +110,8 @@ remembers to resume.
 
 ## The tests, and where they came from
 
-`scripts/validate-skills.sh` is vendored from `agent-config-harness`, at the
+`scripts/validate-skills.sh` is vendored from
+[`agent-config-harness`](https://github.com/damson/agent-config-harness), at the
 commit named in its header. It began as a copy because the harness was private
 then; it stays one now that the harness is public because the copy is what
 keeps contribution self-contained: the exact check CI runs sits in the repo,

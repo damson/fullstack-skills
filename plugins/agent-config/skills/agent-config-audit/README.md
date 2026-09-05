@@ -26,6 +26,11 @@ apply each **on approval**; it never batch-applies without asking).
 
 It reports first, always. Without `--fix` nothing is written.
 
+It does not fire to write or restructure one file, which is
+`claude-md-pointer-check`, nor to judge whether a single addition earns its
+place, which is `redundancy-check-before-ship`. This one reads the instruction
+files as a set and reports what they do to each other.
+
 ## Example
 
 On a project whose `AGENTS.md` picked up a personal commit-style rule, the

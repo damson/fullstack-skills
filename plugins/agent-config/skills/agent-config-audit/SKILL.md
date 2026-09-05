@@ -5,6 +5,10 @@ description: >
   contradictions, duplication, bloat, and personal/team boundary violations. Use when unsure
   which instruction files are active for a project, after restructuring how your config is
   organised, or when the same rule turns up in two files with different wording.
+  Do NOT fire to write or restructure one file (that is
+  `claude-md-pointer-check`), to judge whether a single addition earns its place
+  (`redundancy-check-before-ship`), or on source, tests and config values: this
+  reads the instruction files as a set and reports what they do to each other.
 ---
 
 # Agent Config Audit

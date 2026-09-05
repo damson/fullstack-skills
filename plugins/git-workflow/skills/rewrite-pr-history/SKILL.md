@@ -64,7 +64,24 @@ Use the smallest-blast-radius command for the job:
 Non-interactive drop/reorder: pipe the todo-list edit through the sequence
 editor rather than a terminal —
 `GIT_SEQUENCE_EDITOR=<script> git rebase -i <base>`, where the script edits
-`"$1"` in place (e.g. `sed -i '' 's/^pick <sha>/drop <sha>/' "$1"`).
+`"$1"` in place. Write the edit to a temporary file and move it over the
+original rather than reaching for `sed -i`: the in-place flag takes a mandatory
+empty argument on BSD (`sed -i ''`) and refuses one on GNU, so either spelling
+is broken on half the machines that install this skill.
+
+Resolve the commit to a real object id first, and export it: git writes object
+ids in the todo file, so a literal `<sha>` matches nothing and the rebase
+replays the branch unchanged, which looks like success.
+
+```bash
+export DROP=$(git rev-parse --short=7 <commit-to-drop>)
+GIT_SEQUENCE_EDITOR='f() { sed "s/^pick $DROP/drop $DROP/" "$1" > "$1.todo" && mv "$1.todo" "$1"; }; f' \
+  git rebase -i <base>
+```
+
+Seven characters on purpose: git abbreviates the todo's ids to whatever the
+repository needs, and a seven-character prefix still matches a longer one, while
+a full forty-character id matches nothing at all.
 
 **If the rebase stops on a conflict**: resolve the conflicted files, `git add`
 them, `git rebase --continue`; repeat per commit. If a resolution is not

@@ -72,11 +72,41 @@ For each open PR you have touched in this session — OR all open PRs in the cur
    - **Exclude the reviewer's own account** from the candidate set, identified by author login, so the filter can only ever select your own comment.
    - **Count the matches here, not in step 6.** Zero is no sticky yet, so every comment is new; one is the sticky; more than one stops the loop and is surfaced to the user. Counting later lets the loop classify, edit and push before it aborts, and overwriting the wrong comment raises no error.
 
-   With exactly one, compare each comment's `createdAt` against the sticky's
-   **last-edit time**, `jq -r '.[0].updated_at' <<<"$mine"` — creation time never
-   advances once the sticky is edited in place.
+   With exactly one, read the sticky's **last-edit time**, `jq -r '.[0].updated_at'
+   <<<"$mine"`: creation time never advances once the sticky is edited in place,
+   so the edit time is when you last answered. **A comment created after it is
+   new and gets a row this round; one created before it was answered already.**
 
-3. **Verify each finding against the source, then classify it.** Before acting on a finding, open the cited `file:line` in the actual source. Cold-read reviewers see the diff without surrounding context and are confidently wrong often enough that applying findings unchecked introduces bugs — the classic misses: a "missing" guard that exists just outside the hunk, a demanded convention the repo doesn't have, a finding re-raised rounds after it was applied. A finding that does not survive that check is 🚫 Skipped, never silenced — the step 6 table owns the rationale rules.
+3. **Verify each finding against the source, then classify it.** Start by
+   dropping the ones that are not current: a comment whose `.line` is `null` is
+   pinned to a commit the branch has moved past, and on a branch that already
+   answered a round, most of those were fixed by the commits that answered it.
+
+   ```bash
+   gh api "repos/<owner>/<repo>/pulls/<n>/comments" \
+     --jq '.[] | select(.subject_type == "line" and .line == null)
+           | {id, path, body, diff_hunk,
+              was: .original_line, from: .original_start_line,
+              at: .original_commit_id}'
+   ```
+
+   Two things that projection is doing deliberately. It keeps what verifying a
+   finding needs — the id to reply to it, the body and `diff_hunk` to read what
+   it actually said, the full commit id rather than a prefix — because a
+   dismissal you cannot re-read is indistinguishable from one you never made.
+   And it pins the filter to `subject_type == "line"`, since a file-level
+   comment is attached to a whole file rather than a line and is current no
+   matter what its line field says. GitHub reports `line: 1` for those today
+   (checked by posting one and reading it back), so `.line == null` alone does
+   not currently catch them; the guard is there so that a change in that
+   behaviour cannot silently turn a live finding into a dismissed one.
+
+   Stale means the line moved, not that the defect is gone, so read the current
+   file before dismissing one — but this routinely turns an alarming count into
+   none, and re-fixing what is already fixed is how a round produces a diff that
+   changes nothing.
+
+   Then, for what remains, open the cited `file:line` in the actual source. Cold-read reviewers see the diff without surrounding context and are confidently wrong often enough that applying findings unchecked introduces bugs — the classic misses: a "missing" guard that exists just outside the hunk, a demanded convention the repo doesn't have, a finding re-raised rounds after it was applied. A finding that does not survive that check is 🚫 Skipped, never silenced — the step 6 table owns the rationale rules.
 
    Then parse the comment body (`.comments[].body` and `.reviews[].body` from the JSON above) for emoji headings `🔴 Critical`, `🟡 Should fix`, `🟢 Nice to have`; a finding that is pure praise or explicitly requires no action classifies as 💬 Acknowledgement. If the reviewer doesn't use that emoji convention, split the comment into its distinct findings yourself and classify each by the same rules — praise is still 💬, everything actionable defaults to 🟡 — marking each classification as assumed in the reply table so the user can re-grade.
 
@@ -147,7 +177,7 @@ For each open PR you have touched in this session — OR all open PRs in the cur
    Pushed as `<sha>`.
    ```
 
-   Post via `gh pr comment <n> --body "$(cat <<'EOF' ... EOF)"`. Even when every finding is 🚫 Skipped with no code change, still post the reply.
+   Write the body to `reply.md` and post it with the upsert above, never with a bare `gh pr comment`: that creates a second comment every round, which is the thing this whole step exists to prevent. Even when every finding is 🚫 Skipped with no code change, still post the reply.
 
    ### Recovering a clobbered comment
 

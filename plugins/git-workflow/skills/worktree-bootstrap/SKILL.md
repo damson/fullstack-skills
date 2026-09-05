@@ -91,7 +91,18 @@ Check `package.json` scripts (or the Makefile / `pyproject.toml`) for a `postins
 
 Run the cheapest command that exercises real config + deps, not just a lockfile check:
 
-- Node app: with the package manager step 1 detected — or, lacking a lockfile, the `packageManager` field in `package.json`, else npm — run the first of `typecheck` / `build` that actually exists under `scripts` (read it; a guessed script name fails as "missing script", not as a real verdict). If the change is runtime-facing, start the dev server bounded (`timeout 30 <pm> run dev` or kill after the first successful response) — never leave it running.
+- Node app: with the package manager step 1 detected — or, lacking a lockfile, the `packageManager` field in `package.json`, else npm — run the first of `typecheck` / `build` that actually exists under `scripts` (read it; a guessed script name fails as "missing script", not as a real verdict). If the change is runtime-facing, start the dev server bounded and never leave it running. Take the URL from the dev script's own output or the port in the project's config, never a guessed 3000: a probe against the wrong port fails the same way a broken server does. `timeout` is GNU coreutils and a stock macOS does not have it, so the bound is the shell's:
+
+  ```bash
+  <pm> run dev & pid=$!
+  ready=
+  for _ in $(seq 1 30); do
+    curl -sf --max-time 2 "$url" >/dev/null && { ready=1; break; }   # --max-time, or one hung request outlasts the loop
+    sleep 1
+  done
+  kill "$pid" 2>/dev/null                                            # started it, so stop it on both paths
+  [ -n "$ready" ] || { echo "dev server never answered $url"; exit 1; }
+  ```
 - Python: `pytest -q` or `python -m <package> --help`.
 - Android/Gradle: `./gradlew help -q` — the cheapest full configure; it proves `local.properties` resolves — then the module's build/test task.
 - General: the repo's documented smoke command.

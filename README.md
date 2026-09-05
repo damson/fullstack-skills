@@ -11,7 +11,7 @@ you don't have to win them the hard way too.*
 [![Coverage](https://codecov.io/gh/damson/hard-won-skills/branch/develop/graph/badge.svg)](https://codecov.io/gh/damson/hard-won-skills/branch/develop)
 [![Made for Claude Code](https://img.shields.io/badge/made%20for-Claude%20Code-d97757.svg)](https://claude.com/claude-code)
 
-👋 **Welcome!** This is a marketplace of **33 skills in 5 themed plugins**:
+👋 **Welcome!** This is a marketplace of **35 skills in 5 themed plugins**:
 small, careful procedures your agent picks up automatically when a task calls
 for them: rebasing a stack of PRs without losing one, proving a screenshot test
 actually compared pixels, probing a migration without leaving a trace.
@@ -29,6 +29,7 @@ the scars: each skill knows not just what to do, but when to stop and ask.
 [verification](#verification) · [data-safety](#data-safety) ·
 [mobile-ui](#mobile-ui)) ·
 [What a skill looks like](#-what-a-skill-here-looks-like) ·
+[The harness](#-the-harness-behind-these-skills) ·
 [Contributing](#-contributing) ·
 [Releases](#-releases)
 
@@ -57,8 +58,8 @@ example; start with any link below.
 
 | Plugin | Skills | What it is for |
 |---|---|---|
-| **[git-workflow](plugins/git-workflow/README.md)** | 13 | Branch, worktree and pull-request hygiene |
-| **[agent-config](plugins/agent-config/README.md)** | 8 | Writing and auditing agent instruction files |
+| **[git-workflow](plugins/git-workflow/README.md)** | 14 | Branch, worktree and pull-request hygiene |
+| **[agent-config](plugins/agent-config/README.md)** | 9 | Writing and auditing agent instruction files |
 | **[verification](plugins/verification/README.md)** | 3 | Proving a check can fail before trusting it |
 | **[data-safety](plugins/data-safety/README.md)** | 5 | Writes that are hard to undo |
 | **[mobile-ui](plugins/mobile-ui/README.md)** | 4 | Android / Compose screenshots, Figma components, on-device checks |
@@ -82,7 +83,9 @@ wait out a PR's checks at a pinned SHA where an empty conclusion counts as
 pending, and land a batch of independent fixes as file-disjoint PRs built by
 parallel agents whose scope fences hold. And one more: run a release to
 completion rather than to the merge, since the tag, the floating tag and the
-back-merge all fail without turning anything red.
+back-merge all fail without turning anything red. And the step every one of
+those stops short of: press the merge button itself, once the go-ahead is
+confirmed to still cover this pull request at this commit.
 
 [`branch-hygiene`](plugins/git-workflow/skills/branch-hygiene/README.md) ·
 [`pr-comment-loop`](plugins/git-workflow/skills/pr-comment-loop/README.md) ·
@@ -96,14 +99,16 @@ back-merge all fail without turning anything red.
 [`parallel-pr-fanout`](plugins/git-workflow/skills/parallel-pr-fanout/README.md) ·
 [`bump-vendored-pin`](plugins/git-workflow/skills/bump-vendored-pin/README.md) ·
 [`wire-scheduled-workflow`](plugins/git-workflow/skills/wire-scheduled-workflow/README.md) ·
-[`close-the-release-cycle`](plugins/git-workflow/skills/close-the-release-cycle/README.md)
+[`close-the-release-cycle`](plugins/git-workflow/skills/close-the-release-cycle/README.md) ·
+[`merge-on-go-ahead`](plugins/git-workflow/skills/merge-on-go-ahead/README.md)
 
 ### agent-config
 
 Audit a `CLAUDE.md` stack for contradictions and duplication, keep a config file
 a pointer rather than a copy of its sibling, notice when a repeated instruction
 should become a skill, validate a skill against a real project before trusting
-it, and capture a long session's learnings before compacting.
+it, capture a long session's learnings before compacting, and turn a finding
+about one page into a checked answer about every page like it.
 
 [`agent-config-audit`](plugins/agent-config/skills/agent-config-audit/README.md) ·
 [`claude-md-pointer-check`](plugins/agent-config/skills/claude-md-pointer-check/README.md) ·
@@ -112,7 +117,8 @@ it, and capture a long session's learnings before compacting.
 [`validate-skill-against-real-project`](plugins/agent-config/skills/validate-skill-against-real-project/README.md) ·
 [`prompt-coach`](plugins/agent-config/skills/prompt-coach/README.md) ·
 [`save-before-compact`](plugins/agent-config/skills/save-before-compact/README.md) ·
-[`session-retro`](plugins/agent-config/skills/session-retro/README.md)
+[`session-retro`](plugins/agent-config/skills/session-retro/README.md) ·
+[`sweep-the-siblings`](plugins/agent-config/skills/sweep-the-siblings/README.md)
 
 ### verification
 
@@ -171,6 +177,38 @@ Skills are written to be **portable**: none names a path from the repo it came
 from, or assumes a folder layout. Where one can take advantage of tooling you
 may not have, it says so and degrades instead of failing.
 
+## 🔬 The harness behind these skills
+
+These were extracted while building
+**[agent-config-harness](https://github.com/damson/agent-config-harness)**:
+agent instruction files, scored and regression-tested like code. If this
+marketplace is the habits, that repo is the bench they were measured on, and
+`scripts/validate-skills.sh` here is vendored straight from it.
+
+It asks the question a `CLAUDE.md` rarely gets asked: when did you last measure
+it? Config files are graded one to five on clarity, conciseness, completeness,
+consistency and actionability, out of 25 with a letter grade and named
+findings, recorded per domain over time so an improvement is distinguishable
+from a rewrite that merely felt productive. A `bats` suite covers the
+structural invariants a rubric cannot see, including the skill layout this
+marketplace's own CI enforces.
+
+It is also a GitHub Action, so a build fails when config quality slips below a
+grade you choose:
+
+```yaml
+- uses: actions/checkout@v4
+- uses: damson/agent-config-harness@v1
+  env:
+    ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+  with:
+    files: CLAUDE.md
+    fail-below: C
+```
+
+Seeing what a grade looks like costs no API key: two real eval runs ship in the
+repo, the same config one edit apart, 24/25 and 13/25.
+
 ## 🤝 Contributing
 
 Found a rough edge? That's exactly the kind of thing this repo is made of: a
@@ -191,11 +229,5 @@ A workflow promotes one to the other every three days, but only when there is
 something to promote and the CI suite passes: plugins that changed get a patch
 bump, the marketplace gets a CalVer tag. Gates, couplings and how to hold a
 release: [docs/releases.md](docs/releases.md).
-
-## 🔗 Related
-
-The engine these were extracted from (a domain registry, an LLM rubric that
-scores config quality, and a `bats` suite that enforces skill structure) lives
-separately in `agent-config-harness`.
 
 [MIT licensed](LICENSE). Use them, fork them, make them yours.

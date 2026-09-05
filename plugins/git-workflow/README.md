@@ -33,6 +33,7 @@ happen.
 | [`bump-vendored-pin`](skills/bump-vendored-pin/README.md) | Move a pinned vendored dependency only with the evidence that earned the new commit |
 | [`wire-scheduled-workflow`](skills/wire-scheduled-workflow/README.md) | Check a cron workflow is actually registered: GitHub only arms schedules from the default branch |
 | [`close-the-release-cycle`](skills/close-the-release-cycle/README.md) | Run a release to completion: promote, tag, move the floating tag, back-merge, and prove each one happened |
+| [`merge-on-go-ahead`](skills/merge-on-go-ahead/README.md) | Merge only what the user authorised, at the head they authorised, in the method the repo prefers, waiting out the recomputation between dependent merges |
 
 Each skill's README carries its triggers and a worked example; the `SKILL.md`
 beside it is the procedure the agent follows.
