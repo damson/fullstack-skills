@@ -54,7 +54,14 @@ jobs:
       - name: Marketplace wiring
         run: python3 scripts/validate-marketplace.py
 
-      # Unit tests for the three Python scripts above and the release tooling,
+      # The shell these skills publish is the part a reader pastes into a
+      # terminal, and nothing else here reads it: before this step, a block with
+      # an unbalanced quote shipped green. `bash -n` parses without executing,
+      # so no skill's commands run.
+      - name: Shell blocks parse
+        run: python3 scripts/validate-shell-blocks.py
+
+      # Unit tests for the Python scripts above and the release tooling,
       # run under coverage so regressions in the validators are visible as a
       # number, not just a feeling. The scripts stay stdlib-only; pytest and
       # coverage are dev/CI dependencies, installed here and nowhere else.

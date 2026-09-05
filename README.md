@@ -219,7 +219,7 @@ new skill is the lineage above: it encodes something that actually went wrong
 and would go wrong again.
 
 **[CONTRIBUTING.md](CONTRIBUTING.md) is the complete guide**: ways to
-contribute, what a skill ships as, the two validators to run before pushing,
+contribute, what a skill ships as, the three validators to run before pushing,
 and the conventions they cannot see.
 
 ## 📦 Releases

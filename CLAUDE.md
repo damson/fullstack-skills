@@ -1,13 +1,14 @@
 # CLAUDE.md — hard-won-skills
 
 Read [README.md](README.md) first — what this marketplace is, the themes, and
-the two validators. Releases: [docs/releases.md](docs/releases.md). The
+the three validators. Releases: [docs/releases.md](docs/releases.md). The
 directives below are agent-only.
 
 ## Before committing
 
-- Run both checks CI runs: `./scripts/validate-skills.sh` and
-  `python3 scripts/validate-marketplace.py`.
+- Run all three checks CI runs: `./scripts/validate-skills.sh`,
+  `python3 scripts/validate-marketplace.py` and
+  `python3 scripts/validate-shell-blocks.py`.
 - A skill added, removed or materially changed updates the README theme table
   and skill list, and minor-bumps its plugin's version, **in the same PR**. The
   release workflow adds the patch bump; never pre-apply it.
