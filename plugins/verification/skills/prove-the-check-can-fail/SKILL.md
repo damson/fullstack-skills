@@ -73,6 +73,14 @@ command pass?", this one asks "would it have caught the bug?".
   confirms a regex by running that regex counts its own false positives as
   confirmations. Validate with a DIFFERENT rule — the near-miss it must not match,
   or the side you did not count.
+- **Mutate every SHAPE the check's matcher can meet, not one instance of one
+  shape.** A check that recognises its subject by pattern is only proved against
+  the patterns you fed it, and the ones you skip are exactly where it is blind.
+  A CI guard comparing two lists of command-line flags was proved by changing a
+  flag that takes a value, went red, and shipped; its matcher required an `=`, so
+  every valueless flag in the same list — `--verify`, `--merge` — drifted past it
+  reporting a match. One mutation per shape the pattern admits: with a value and
+  without, at the start of a line and mid-line, quoted and bare.
 - **Delete ONE occurrence, not all.** A rule stated twice by design — a policy's
   `USING` and its `WITH CHECK`, a value repeated per environment, a guard in both
   branches of a fork — survives a presence assertion (`toContain`, `grep -q`)
