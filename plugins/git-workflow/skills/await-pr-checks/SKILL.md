@@ -63,6 +63,43 @@ session:
    SUCCESS`), never a bare "checks are green". A verdict that names nothing
    cannot be checked against reality later.
 
+
+## A known-good watcher
+
+Hand-rolling the loop is where the three lies creep in, and one session
+rewrote it six times. This shape survived every PR of that session; adapt
+names, keep the rules (pinned SHA, newest attempt, completed-only, judged
+conclusions):
+
+```bash
+sha=<pinned head>   # from step 1, never re-read inside the loop
+prev=""
+while true; do
+  s=$(gh api "repos/<owner>/<repo>/commits/$sha/check-runs" \
+        --jq '[.check_runs[] | {name, status, conclusion}]' 2>/dev/null) \
+    || { sleep 30; continue; }
+  cur=$(jq -r '.[] | select(.status=="completed") | "\(.name): \(.conclusion)"' <<<"$s" | sort)
+  comm -13 <(echo "$prev") <(echo "$cur")   # emit only what newly completed
+  prev=$cur
+  pending=$(jq -r '[.[] | select(.status!="completed")] | length' <<<"$s")
+  n=$(jq -r 'length' <<<"$s")
+  # n >= <expected count> guards the race where the loop starts before all
+  # checks have registered: zero pending over an empty list is not done.
+  [ "$pending" = "0" ] && [ "$n" -ge <expected count> ] && { echo DONE; break; }
+  sleep 30
+done
+```
+
+For the final verdict after reruns (a PR-body edit, a manual re-run), judge
+the NEWEST attempt of each check by start time; an old failure with a green
+rerun beside it is not red:
+
+```bash
+gh api "repos/<owner>/<repo>/commits/$sha/check-runs" --jq \
+  '[.check_runs[] | select(.status=="completed")] | group_by(.name)
+   | map(max_by(.started_at)) | .[] | .name + " :: " + .conclusion'
+```
+
 ## When to STOP
 
 - **No run registers for the pinned SHA within ~5 minutes.** That is a trigger
