@@ -63,6 +63,79 @@ session:
    SUCCESS`), never a bare "checks are green". A verdict that names nothing
    cannot be checked against reality later.
 
+
+## A known-good watcher
+
+Hand-rolling the loop is where the three lies creep in, and one session
+rewrote it six times. This shape survived every PR of that session. Fill the
+three values from steps 1 and 2, then paste the rest unchanged:
+
+```bash
+repo=owner/name                               # fill these three in
+pr=123
+expected=$(printf '%s\n' validate codecov/patch codecov/project | sort)
+
+sha=$(gh pr view "$pr" --repo "$repo" --json headRefOid --jq .headRefOid)
+
+prev=""; seen=0
+for i in $(seq 1 120); do                     # 120 x 30s, a one-hour ceiling
+  runs=$(gh api "repos/$repo/commits/$sha/check-runs" \
+           --jq '.check_runs[] | {name, status, conclusion}' 2>/dev/null)
+  # a review bot or third-party gate posts a legacy commit status, which the
+  # check-runs endpoint does not return at all
+  stat=$(gh api "repos/$repo/commits/$sha/status" \
+           --jq '.statuses[] | {name: .context, conclusion: .state,
+                 status: (if .state == "pending" then "queued" else "completed" end)}' 2>/dev/null)
+  s=$(printf '%s\n%s\n' "$runs" "$stat" | jq -s '.')
+  [ "$(jq -r length <<<"$s")" -gt 0 ] && seen=1
+  cur=$(jq -r '.[] | select(.status=="completed") | "\(.name): \(.conclusion)"' <<<"$s" | sort)
+  comm -13 <(echo "$prev") <(echo "$cur")     # emit only what newly completed
+  prev=$cur
+  ready=$(jq -r '.[] | select(.status=="completed") | .name' <<<"$s" | sort -u)
+  [ -n "$(comm -23 <(echo "$expected") <(echo "$ready"))" ] || {
+    now=$(gh pr view "$pr" --repo "$repo" --json headRefOid --jq .headRefOid)
+    [ "$now" = "$sha" ] || { echo "HEAD MOVED $sha -> $now"; sha=$now; prev=""; seen=0; continue; }
+    red=$(comm -12 <(echo "$expected") <(jq -r \
+      '.[] | select(.status=="completed" and .conclusion!="success") | .name' <<<"$s" | sort -u))
+    [ -z "$red" ] && echo "ALL GREEN" || echo "RED: $(echo "$red" | tr '\n' ' ')"
+    break; }
+  [ "$seen" = 0 ] && [ "$i" -ge 10 ] && { echo "NO RUN for $sha"; break; }
+  sleep 30
+done
+```
+
+Five things in it are load-bearing. It reads **both** surfaces: GitHub Actions
+publishes check runs, while review bots and older third-party gates publish
+commit statuses, and neither endpoint returns the other's rows, so a watcher on
+one of them waits out its whole ceiling for a gate that already passed on the
+other. Statuses also carry their own vocabulary, `error` and `failure` where a
+check run says `failure`, and both are terminal without being a pass. So the
+loop **ends on a verdict, never on the word done**: settled is not passed is
+the third lie above, and a bare `DONE` beside a red `validate` is how a session
+commits it. The terminal condition is over the **names** step 2 expects, never
+over a count: a check nobody expected can make
+the count while the one that would have failed the PR never registered, and a
+required check behind a path filter registers never. The loop is **bounded** —
+an unreachable API or a trigger that will not fire is a report, not a longer
+wait, so the counted `for` gives it a ceiling and the `seen` flag turns five
+quiet minutes into the diagnostic *When to STOP* asks for. And `expected` is
+built with `printf`, because an unquoted `$list` does not word-split in zsh.
+Finally the pin is **re-checked at the moment of the verdict, not only at the
+start**: a push during the wait makes every conclusion collected so far an
+answer about a commit nobody is asking about, so the loop re-pins and keeps
+going rather than reporting it.
+
+After a rerun, the newest attempt is already the one you get: the check-runs
+endpoint filters to `latest` by default and returns one entry per name, so an old
+failure beside a green rerun is not something the loop has to reason about.
+Only `?filter=all` returns every attempt, and only then do you need to pick:
+
+```bash
+gh api "repos/$repo/commits/$sha/check-runs?filter=all" --jq \
+  '[.check_runs[] | select(.status=="completed")] | group_by(.name)
+   | map(max_by(.started_at)) | .[] | .name + " :: " + .conclusion'
+```
+
 ## When to STOP
 
 - **No run registers for the pinned SHA within ~5 minutes.** That is a trigger
