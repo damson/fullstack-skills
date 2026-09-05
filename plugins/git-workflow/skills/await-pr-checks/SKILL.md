@@ -93,6 +93,8 @@ for i in $(seq 1 120); do                     # 120 x 30s, a one-hour ceiling
   prev=$cur
   ready=$(jq -r '.[] | select(.status=="completed") | .name' <<<"$s" | sort -u)
   [ -n "$(comm -23 <(echo "$expected") <(echo "$ready"))" ] || {
+    now=$(gh pr view "$pr" --repo "$repo" --json headRefOid --jq .headRefOid)
+    [ "$now" = "$sha" ] || { echo "HEAD MOVED $sha -> $now"; sha=$now; prev=""; seen=0; continue; }
     red=$(comm -12 <(echo "$expected") <(jq -r \
       '.[] | select(.status=="completed" and .conclusion!="success") | .name' <<<"$s" | sort -u))
     [ -z "$red" ] && echo "ALL GREEN" || echo "RED: $(echo "$red" | tr '\n' ' ')"
@@ -102,7 +104,7 @@ for i in $(seq 1 120); do                     # 120 x 30s, a one-hour ceiling
 done
 ```
 
-Four things in it are load-bearing. It reads **both** surfaces: GitHub Actions
+Five things in it are load-bearing. It reads **both** surfaces: GitHub Actions
 publishes check runs, while review bots and older third-party gates publish
 commit statuses, and neither endpoint returns the other's rows, so a watcher on
 one of them waits out its whole ceiling for a gate that already passed on the
@@ -118,6 +120,10 @@ an unreachable API or a trigger that will not fire is a report, not a longer
 wait, so the counted `for` gives it a ceiling and the `seen` flag turns five
 quiet minutes into the diagnostic *When to STOP* asks for. And `expected` is
 built with `printf`, because an unquoted `$list` does not word-split in zsh.
+Finally the pin is **re-checked at the moment of the verdict, not only at the
+start**: a push during the wait makes every conclusion collected so far an
+answer about a commit nobody is asking about, so the loop re-pins and keeps
+going rather than reporting it.
 
 After a rerun, the newest attempt is already the one you get: the check-runs
 endpoint filters to `latest` by default and returns one entry per name, so an old
